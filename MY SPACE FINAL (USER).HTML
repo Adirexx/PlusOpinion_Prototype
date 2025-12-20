@@ -1,0 +1,1078 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PlusOpinion - My Space (Final)</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Global Design System -->
+    <link rel="stylesheet" href="./global.css">
+
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#020205">
+    
+    <!-- Libraries -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="./runtime.js"></script>
+    <script src="./bridge.js"></script> 
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- Visual Tokens & Global CSS -->
+    <style>
+        :root {
+            --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+            --font-heading: 'Space Grotesk', system-ui, serif;
+
+            --bg-deep: #020205; 
+            --neon: #2f8bff;            
+            --neon-glow: rgba(47, 139, 255, 0.6);
+            --card-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            
+            --success: #00E676; 
+            --gold: #FFD700;
+            --danger: #FF5252;
+        }
+
+        html, body {
+            height: 100%;
+            margin: 0;
+            overflow: hidden;
+            background-color: var(--bg-deep);
+            color: white;
+            font-family: var(--font-body);
+        }
+        
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* --- AMBIENT BACKGROUND --- */
+        .ambient-bg {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: radial-gradient(circle at 50% 0%, #050814 0%, var(--bg-deep) 90%);
+            z-index: -2;
+            pointer-events: none;
+        }
+        
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(120px);
+            z-index: -1;
+            opacity: 0.2; 
+            animation: pulse-glow 10s infinite ease-in-out alternate;
+        }
+        .orb-1 { top: -20%; left: -10%; width: 80vw; height: 80vw; background: radial-gradient(circle, var(--neon), transparent); }
+        .orb-2 { bottom: -20%; right: -10%; width: 80vw; height: 80vw; background: radial-gradient(circle, #1e3a8a, transparent); animation-delay: -5s; }
+
+        @keyframes pulse-glow {
+            0% { transform: scale(1); opacity: 0.2; }
+            100% { transform: scale(1.1); opacity: 0.3; }
+        }
+
+        /* --- CONTAINER --- */
+        #root {
+            width: 100%;
+            height: 100%;
+            max-width: 450px; 
+            background: rgba(2, 2, 5, 0.85); 
+            backdrop-filter: blur(20px); 
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 0 50px rgba(0,0,0,0.9);
+            overflow: hidden;
+        }
+
+        /* --- UTILITIES --- */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        
+        .view-content {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding-bottom: 100px;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .glass-panel {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            transition: border-color 0.2s, background 0.2s;
+        }
+        .glass-panel:active {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(47, 139, 255, 0.3);
+        }
+
+        .header-glass {
+            background: rgba(2, 2, 5, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--glass-border);
+            z-index: 50;
+        }
+
+        .font-heading { font-family: var(--font-heading); }
+
+        /* --- ANIMATIONS --- */
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        .animate-slide-in {
+            animation: slideInRight 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+        }
+
+        @keyframes glow-move {
+            0% { box-shadow: 0 0 5px var(--neon); }
+            50% { box-shadow: 0 0 15px var(--neon), 0 0 5px white; }
+            100% { box-shadow: 0 0 5px var(--neon); }
+        }
+        .glow-tip {
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 6px;
+            height: 6px;
+            background: white;
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--neon);
+            animation: glow-move 2s infinite;
+        }
+
+        /* RQS Animation Logic */
+        .rqs-svg circle.progress-circle {
+            transition: stroke-dashoffset 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+            /* Important: Rotate -90 to start at 12 o'clock */
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+        
+        .neon-filter {
+            filter: drop-shadow(0 0 8px var(--neon)) drop-shadow(0 0 15px var(--neon));
+        }
+
+        /* Pill & Logo Styles */
+        .brand-pill {
+            background: #0D111C; 
+            border: 1px solid rgba(255, 255, 255, 0.15); 
+            border-radius: 6px; 
+            padding: 4px 10px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .brand-pill-dot { width: 6px; height: 6px; background-color: var(--neon); border-radius: 50%; box-shadow: 0 0 6px var(--neon); }
+        .brand-pill-text { color: white; font-weight: 600; font-size: 11px; letter-spacing: 0.02em; }
+
+        .brand-logo-container {
+            width: 42px; height: 42px; background: white; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center; padding: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        .brand-logo-img { width: 100%; height: 100%; object-fit: contain; filter: grayscale(100%); transition: filter 0.2s; }
+        .group:hover .brand-logo-img { filter: grayscale(0%); }
+
+    </style>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        neon: 'var(--neon)',
+                        muted: 'rgba(255, 255, 255, 0.6)',
+                        'brand-blue': '#2f8bff',
+                        'accent-green': '#00E676',
+                        'accent-gold': '#FFD700',
+                    },
+                    fontFamily: {
+                        heading: ['Space Grotesk', 'serif'],
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body>
+    <div class="ambient-bg">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+    </div>
+    
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+        const { createRoot } = ReactDOM;
+
+        // 🔗 GLOBAL NAVIGATION FUNCTION (PASTE HERE)
+        const goTo = (page) => {
+            window.scrollTo(0, 0);
+            window.location.href = page;
+        };
+
+        function dispatchAction(action) {
+          if (window.PlusOpinionActions && window.PlusOpinionActions[action]) {
+            // Already on homepage
+            window.PlusOpinionActions[action]();
+          }else {
+            // On another page → redirect with hash
+            window.location.href = `HOMEPAGE_FINAL.HTML#${action.replace('open', '').toLowerCase()}`;
+          }
+        }
+
+        const triggerAction = (action) => {
+            if (window.PlusOpinionActions?.[action]) {
+                window.PlusOpinionActions[action]();
+            } else {
+                window.location.href = `HOMEPAGE_FINAL.HTML#${action.replace('open', '').toLowerCase()}`;
+            }
+        };
+
+         // 🔁 PAGE → TAB MAP (GLOBAL)
+         const PAGE_TAB_MAP = { 
+           'HOMEPAGE_FINAL.HTML': 'home',
+           'CATAGORYPAGE.HTML': 'categories',
+           'MY SPACE FINAL (USER).HTML': 'myspace',
+           'NOTIFICATION PANEL.HTML': 'notifs',
+           'PRIVATE OWNER PROFILE.HTML': 'profile'
+        };
+
+        // --- ICONS ---
+        const Icons = {
+            ArrowLeft: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>,
+            Settings: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.74v-.47a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>,
+            ChevronRight: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>,
+            Wallet: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>,
+            Chart: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>,
+            Star: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>,
+            Zap: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>,
+            Shield: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/></svg>,
+            Help: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>,
+            Check: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>,
+            Clock: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>,
+            User: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
+            Home: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
+            Grid: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>,
+            Bell: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>,
+            Gift: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5"/></svg>,
+            MySpaceLogo: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M11 3L3 22" strokeLinejoin="bevel"/><path d="M21 22L11 3" strokeLinejoin="bevel"/><path d="M22 8L4 18" style={{transform: 'translateX(-5px) translateY(5px)', opacity: 1, stroke: 'var(--neon)'}} strokeWidth="2.5" /></svg>,
+            Lock: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>,
+            Download: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>,
+            Activity: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>,
+            Mail: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>,
+            Eye: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>,
+            Users: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>,
+        };
+
+        const Icon = ({ icon, size = 20, className = "" }) => {
+            const Component = Icons[icon];
+            if (!Component) return null;
+            return <Component width={size} height={size} className={className} />;
+        };
+
+        // --- DATA ---
+        const BRAND_LOGOS = {
+          // SimpleIcons (verified)
+          "OnePlus": "https://cdn.simpleicons.org/oneplus/000000",
+          "LG India": "https://cdn.simpleicons.org/lg/000000",
+          "Sony": "https://cdn.simpleicons.org/sony/000000",
+          "Cursor": "https://cdn.simpleicons.org/cursor/000000",
+          "Nike": "https://cdn.simpleicons.org/nike/000000",
+          "Samsung": "https://cdn.simpleicons.org/samsung/000000",
+          "Tesla": "https://cdn.simpleicons.org/tesla/000000",
+          "Apple": "https://cdn.simpleicons.org/apple/000000",
+
+          // ❌ NOT on SimpleIcons → Official SVGs
+          "Ola Electric": "https://upload.wikimedia.org/wikipedia/commons/7/7e/Ola_Electric_Logo.svg",
+          "Dyson": "https://upload.wikimedia.org/wikipedia/commons/1/14/Dyson_logo.svg",
+          "Rare Beauty": "https://upload.wikimedia.org/wikipedia/commons/4/4e/Rare_Beauty_logo.svg",
+        };
+
+        const RAW_POSTS = [
+            { id: 1, name: "Priya Sharma", username: "priya_s", seenBy: "OnePlus", time: "2h" },
+            { id: 2, name: "Vikram Singh", username: "vikram_ev", seenBy: "Ola Electric", time: "4h" },
+            { id: 4, name: "GamerX_99", username: "gamerx99", seenBy: "LG India", time: "1d" },
+            { id: 5, name: "TechJunkie", username: "techie_j", seenBy: "Sony", time: "1d" },
+            { id: 7, name: "David Chen", username: "dchen_dev", seenBy: "Cursor", time: "3d" },
+            { id: 8, name: "Emily Rose", username: "emrose_fit", seenBy: "Nike", time: "3d" },
+            { id: 9, name: "Rahul Verma", username: "rahul_v", seenBy: "Samsung", time: "4d" },
+            { id: 11, name: "Alice Cooper", username: "alice_c", seenBy: "Dyson", time: "5d" },
+            { id: 13, name: "Sneha Patel", username: "sneha_p", seenBy: "Rare Beauty", time: "1w" },
+            { id: 21, name: "Carlos M", username: "carlos_m", seenBy: "Tesla", time: "3w" },
+            { id: 37, name: "AppleFan", username: "cupertino_s", seenBy: "Apple", time: "3mo" }
+        ];
+
+        const USER_DATA = {
+            name: "Alex Rivera",
+            avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix&backgroundColor=0A0F1D",
+            rqs: 84
+        };
+
+        const DATA_STORE = {
+            earnings: {
+                total: 12450.00,
+                lastMonth: 3400.00,
+                logs: [
+                    { id: 1, label: "Verified Review Reward", amount: 12, status: "Paid", date: "Today", icon: "Check" },
+                    { id: 2, label: "Helpful Vote Bonus", amount: 5, status: "Paid", date: "Yesterday", icon: "Star" },
+                    { id: 3, label: "Brand Seen (Samsung)", amount: 8, status: "Pending", date: "Dec 6", icon: "Zap" },
+                    { id: 4, label: "Affiliate: OnePlus", amount: 150, status: "Paid", date: "Dec 4", icon: "Wallet" },
+                    { id: 5, label: "Weekly Top Contributor", amount: 50, status: "Paid", date: "Dec 1", icon: "Star" }
+                ],
+                coupons: [
+                    { id: 1, label: "Nykaa ₹100 OFF", bg: "rgba(47, 139, 255, 0.15)" },
+                    { id: 2, label: "Flipkart 5%", bg: "rgba(255, 255, 255, 0.1)" },
+                    { id: 3, label: "Myntra Ship", bg: "rgba(255, 255, 255, 0.05)" },
+                    { id: 4, label: "Amazon Prime 1M", bg: "rgba(255, 255, 255, 0.1)" }
+                ],
+                breakdown: [
+                    { label: "Verified Reviews", amount: 8200, percent: 65, color: "var(--neon)" },
+                    { label: "Helpful Bonuses", amount: 2100, percent: 18, color: "rgba(255, 255, 255, 0.8)" },
+                    { label: "Affiliate Clicks", amount: 1500, percent: 12, color: "rgba(47, 139, 255, 0.6)" },
+                    { label: "Brand Tips", amount: 650, percent: 5, color: "rgba(255, 255, 255, 0.3)" }
+                ]
+            }
+        };
+
+        // --- COMPONENTS ---
+
+        // Wrapper to handle scroll hide/show separately for each view
+        const ViewWrapper = ({ children, onScroll }) => {
+            return (
+                <div 
+                    className="view-content px-4 pt-4 pb-24 space-y-4"
+                    onScroll={onScroll}
+                >
+                    {children}
+                </div>
+            );
+        };
+
+        const SectionHeader = ({ title, onBack }) => (
+            <div className="header-glass sticky top-0 w-full flex items-center justify-between px-4 h-[65px] z-50 animate-slide-in shrink-0">
+                <div className="flex items-center gap-3">
+                    <button onClick={onBack} className="p-2 -ml-2 rounded-full hover:bg-white/5 active:bg-white/10 transition-colors">
+                        <Icon icon="ArrowLeft" size={20} className="text-white" />
+                    </button>
+                    <h2 className="font-heading font-bold text-lg text-white tracking-wide">{title}</h2>
+                </div>
+            </div>
+        );
+
+        // 1. EARNINGS STUDIO
+        const EarningsView = ({ onBack, onScroll }) => (
+            <div className="flex flex-col h-full bg-[#020205] animate-slide-in">
+                <SectionHeader title="Revenue Studio" onBack={onBack} />
+                <ViewWrapper onScroll={onScroll}>
+                    {/* Main Revenue Card */}
+                    <div className="glass-panel p-6 rounded-2xl relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-neon/10 rounded-full blur-3xl -mr-10 -mt-10"></div>
+                        <p className="text-muted text-xs font-medium uppercase tracking-wider mb-1">Total Estimated Revenue</p>
+                        <h1 className="font-heading text-4xl font-bold text-white mb-6">₹{DATA_STORE.earnings.total.toLocaleString('en-IN')}</h1>
+                        
+                        <div className="grid grid-cols-2 gap-4 border-t border-white/10 pt-4">
+                            <div>
+                                <p className="text-[10px] text-muted uppercase">Last 30 Days</p>
+                                <p className="text-lg font-bold text-white">+₹{DATA_STORE.earnings.lastMonth}</p>
+                            </div>
+                            <div>
+                                <p className="text-[10px] text-muted uppercase">RPM</p>
+                                <p className="text-lg font-bold text-white">₹145</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Coupons Carousel */}
+                    <div>
+                        <div className="flex items-center justify-between mb-3 px-1">
+                            <h3 className="text-xs font-bold text-white uppercase tracking-wider">Active Coupons</h3>
+                            <span className="text-[10px] text-neon">View All</span>
+                        </div>
+                        <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2">
+                            {DATA_STORE.earnings.coupons.map((c, i) => (
+                                <div key={i} className="shrink-0 rounded-xl p-3 flex items-center gap-3 min-w-[150px] glass-panel border border-white/10">
+                                    <div style={{ width: 40, height: 40, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', background: c.bg }}>
+                                        <Icon icon="Gift" size={16} className="text-white" />
+                                    </div>
+                                    <span className="text-xs font-bold text-white leading-tight">{c.label}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Recent Logs */}
+                    <div>
+                        <h3 className="text-xs font-bold text-white mb-3 uppercase tracking-wider px-1">Recent Activity</h3>
+                        <div className="space-y-2">
+                            {DATA_STORE.earnings.logs.map(log => (
+                                <div key={log.id} className="glass-panel rounded-xl p-4 flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="bg-white/5 p-2.5 rounded-xl">
+                                            <Icon icon={log.icon} size={16} className="text-muted" />
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-bold text-white mb-0.5">{log.label}</p>
+                                            <p className="text-[10px] text-muted font-medium">{log.date} • <span className={log.status === 'Paid' ? 'text-accent-green' : 'text-accent-gold'}>{log.status}</span></p>
+                                        </div>
+                                    </div>
+                                    <span className="font-heading font-bold text-sm text-white">+₹{log.amount}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Breakdown Chart */}
+                    <div className="glass-panel p-5 rounded-2xl">
+                        <h3 className="font-heading font-bold text-white mb-4 flex items-center gap-2">
+                            <Icon icon="Chart" size={16} className="text-neon" /> Revenue Sources
+                        </h3>
+                        <div className="space-y-5">
+                            {DATA_STORE.earnings.breakdown.map((item, i) => (
+                                <div key={i}>
+                                    <div className="flex justify-between text-xs mb-1.5">
+                                        <span className="text-white font-medium">{item.label}</span>
+                                        <span className="text-muted">₹{item.amount.toLocaleString()} ({item.percent}%)</span>
+                                    </div>
+                                    <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
+                                        <div className="h-full rounded-full transition-all duration-1000" style={{width: `${item.percent}%`, backgroundColor: item.color}}></div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    <button className="w-full py-3.5 rounded-xl bg-white text-black font-bold text-sm shadow-[0_0_20px_rgba(255,255,255,0.15)] active:scale-[0.98] transition-transform">
+                        Withdraw Funds
+                    </button>
+                </ViewWrapper>
+            </div>
+        );
+
+        // 2. RQS VIEW (Correct Start Point & Bench)
+        const RQSView = ({ onBack, onScroll }) => {
+            const score = USER_DATA.rqs; 
+            const radius = 90;
+            const circumference = 2 * Math.PI * radius;
+            const [dashOffset, setDashOffset] = useState(circumference);
+
+            // Trigger Animation
+            useEffect(() => {
+                const targetOffset = circumference - ((score / 100) * circumference);
+                setTimeout(() => setDashOffset(targetOffset), 300); 
+            }, []);
+            
+            // Calculate benchmark position: 75% of circle from top
+            // Top is 0 degrees (due to rotate(-90)). 75% of 360 is 270 degrees.
+            // So we want the marker at 270 degrees clockwise from top.
+            // Which corresponds to the 9 o'clock position (Left) visually.
+            
+            return (
+                <div className="flex flex-col h-full bg-[#020205] animate-slide-in">
+                    <SectionHeader title="Reputation Score" onBack={onBack} />
+                    <ViewWrapper onScroll={onScroll}>
+                        <div className="flex flex-col items-center">
+                            <div className="relative w-64 h-64 mb-8">
+                                <svg className="w-full h-full rqs-svg">
+                                    {/* Track */}
+                                    <circle cx="128" cy="128" r={radius} stroke="rgba(255,255,255,0.05)" strokeWidth="8" fill="none" />
+                                    {/* Progress Circle - Rotated -90deg via CSS to start at 12 o'clock */}
+                                    <circle 
+                                        className="progress-circle neon-filter"
+                                        cx="128" cy="128" r={radius} 
+                                        stroke="var(--neon)" strokeWidth="8" fill="none"
+                                        strokeDasharray={circumference}
+                                        strokeDashoffset={dashOffset}
+                                        strokeLinecap="round"
+                                    />
+                                </svg>
+                                
+                                {/* BENCHMARK MARKER Logic:
+                                    The circle starts at 12 o'clock (0deg).
+                                    We want the marker at 75%.
+                                    75% of 360deg = 270deg.
+                                    So we rotate the marker container 270deg.
+                                */}
+                                <div className="absolute inset-0 pointer-events-none" style={{transform: 'rotate(270deg)'}}>
+                                    {/* Marker is at top (0deg) of this rotated container */}
+                                    <div className="absolute top-[38px] left-1/2 -translate-x-1/2 w-0.5 h-4 bg-white/90 shadow-[0_0_8px_white]"></div>
+                                </div>
+                                
+                                {/* Label positioned at 9 o'clock (270deg) visually */}
+                                <div className="absolute top-1/2 -left-4 -translate-y-1/2 text-[9px] text-white/90 font-medium bg-black/60 px-2 py-0.5 rounded border border-white/10 backdrop-blur-md">
+                                    Eligibility (75)
+                                </div>
+
+                                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                                    <span className="text-sm font-bold text-muted uppercase tracking-widest mb-1">Score</span>
+                                    <span className="font-heading text-6xl font-bold text-white tracking-tighter">{score}</span>
+                                    <div className="mt-2 bg-neon/10 px-3 py-1 rounded-full border border-neon/20">
+                                        <span className="text-[10px] font-bold text-neon uppercase tracking-wide">Reputed Reviewer</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Detailed Score Factors */}
+                            <div className="w-full space-y-3">
+                                <h3 className="text-xs font-bold text-muted uppercase tracking-wider px-1 mb-2">Score Components</h3>
+                                <div className="glass-panel p-4 rounded-xl flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <Icon icon="Check" size={18} className="text-white" />
+                                        <div>
+                                            <p className="text-xs font-bold text-white">Consistency</p>
+                                            <p className="text-[10px] text-muted">Posting frequency</p>
+                                        </div>
+                                    </div>
+                                    <span className="text-sm font-heading font-bold text-white">92/100</span>
+                                </div>
+                                <div className="glass-panel p-4 rounded-xl flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <Icon icon="Shield" size={18} className="text-neon" />
+                                        <div>
+                                            <p className="text-xs font-bold text-white">Verification</p>
+                                            <p className="text-[10px] text-muted">Authentic purchases</p>
+                                        </div>
+                                    </div>
+                                    <span className="text-sm font-heading font-bold text-white">100/100</span>
+                                </div>
+                                <div className="glass-panel p-4 rounded-xl flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <Icon icon="Star" size={18} className="text-white" />
+                                        <div>
+                                            <p className="text-xs font-bold text-white">Impact</p>
+                                            <p className="text-[10px] text-muted">Community helpfulness</p>
+                                        </div>
+                                    </div>
+                                    <span className="text-sm font-heading font-bold text-white">78/100</span>
+                                </div>
+                            </div>
+                        </div>
+                    </ViewWrapper>
+                </div>
+            );
+        };
+
+        // 3. MONETIZATION
+        const MonetizationView = ({ onBack, onScroll }) => (
+            <div className="flex flex-col h-full bg-[#020205] animate-slide-in">
+                <SectionHeader title="Partner Program" onBack={onBack} />
+                <ViewWrapper onScroll={onScroll}>
+                    {/* Status Header */}
+                    <div className="relative pt-4 pb-8 text-center">
+                        <div className="inline-block relative">
+                            <div className="w-20 h-20 rounded-full border-2 border-neon/50 flex items-center justify-center bg-neon/5 shadow-[0_0_30px_rgba(47,139,255,0.15)]">
+                                <Icon icon="Zap" size={32} className="text-neon" />
+                            </div>
+                            <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-neon text-white text-[9px] font-bold px-3 py-1 rounded-full shadow-lg border border-white/20">
+                                LEVEL 1
+                            </div>
+                        </div>
+                        <h2 className="font-heading text-2xl font-bold text-white mt-4">Partner Status</h2>
+                        <p className="text-xs text-muted mt-1">Progression active. Your actions count.</p>
+                    </div>
+
+                    {/* Glowing Progress Bar */}
+                    <div className="glass-panel p-5 rounded-2xl">
+                        <div className="flex justify-between text-xs font-bold mb-3">
+                            <span className="text-white">Eligibility Progress</span>
+                            <span className="text-neon">60%</span>
+                        </div>
+                        <div className="h-2 w-full bg-white/5 rounded-full relative">
+                            <div className="h-full bg-neon rounded-full relative w-[60%] shadow-[0_0_12px_var(--neon)]">
+                                <div className="glow-tip"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Detailed Criteria List */}
+                    <div className="space-y-4">
+                        <div className="flex justify-between items-center">
+                            <h3 className="text-xs font-bold text-muted uppercase tracking-wider px-1">Requirements</h3>
+                            <span className="text-[10px] text-neon font-bold">Apply Now</span>
+                        </div>
+                        
+                        <div className="glass-panel p-4 rounded-xl flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-full bg-neon/10 flex items-center justify-center border border-neon/30">
+                                    <Icon icon="Check" size={14} className="text-neon" />
+                                </div>
+                                <div>
+                                    <p className="text-sm font-bold text-white">Reputation Score</p>
+                                    <p className="text-[10px] text-muted">Must be ≥ 75</p>
+                                </div>
+                            </div>
+                            <span className="text-xs font-bold text-white">Completed</span>
+                        </div>
+                        
+                        <div className="glass-panel p-4 rounded-xl flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center border border-white/10">
+                                    <span className="text-xs font-bold text-white">2</span>
+                                </div>
+                                <div>
+                                    <p className="text-sm font-bold text-white">Monthly Interactions</p>
+                                    <p className="text-[10px] text-muted">Likes, comments, shares</p>
+                                </div>
+                            </div>
+                            <span className="text-xs font-bold text-white">840 / 1000</span>
+                        </div>
+
+                        <div className="glass-panel p-4 rounded-xl flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center border border-white/10">
+                                    <span className="text-xs font-bold text-white">3</span>
+                                </div>
+                                <div>
+                                    <p className="text-sm font-bold text-white">Verified Reviews</p>
+                                    <p className="text-[10px] text-muted">Authentic product posts</p>
+                                </div>
+                            </div>
+                            <span className="text-xs font-bold text-white">8 / 10</span>
+                        </div>
+                    </div>
+                </ViewWrapper>
+            </div>
+        );
+
+        // 4. ANALYTICS
+        const AnalyticsView = ({ onBack, onScroll }) => {
+            const [tab, setTab] = useState('overview');
+
+            return (
+                <div className="flex flex-col h-full bg-[#020205] animate-slide-in">
+                    <SectionHeader title="Profile Insights" onBack={onBack} />
+                    <ViewWrapper onScroll={onScroll}>
+                        {/* Tabs */}
+                        <div className="flex gap-2 mb-2">
+                            {['Overview', 'Content', 'Audience'].map(t => (
+                                <button 
+                                    key={t}
+                                    onClick={() => setTab(t.toLowerCase())}
+                                    className={`flex-1 py-2 text-[11px] font-bold rounded-lg transition-colors ${tab === t.toLowerCase() ? 'bg-white text-black' : 'bg-white/5 text-muted'}`}
+                                >
+                                    {t}
+                                </button>
+                            ))}
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="glass-panel p-4 rounded-xl">
+                                <p className="text-[10px] text-muted uppercase font-bold mb-1">Total Reach</p>
+                                <p className="font-heading text-xl font-bold text-white">45.2K</p>
+                                <p className="text-[9px] text-neon mt-1 flex items-center gap-1">
+                                    <span className="bg-neon/10 px-1 rounded">▲ 12%</span>
+                                </p>
+                            </div>
+                            <div className="glass-panel p-4 rounded-xl">
+                                <p className="text-[10px] text-muted uppercase font-bold mb-1">Engagement Rate</p>
+                                <p className="font-heading text-xl font-bold text-white">8.4%</p>
+                                <p className="text-[9px] text-neon mt-1 flex items-center gap-1">
+                                    <span className="bg-neon/10 px-1 rounded">▲ 2%</span>
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="glass-panel p-5 rounded-xl">
+                            <div className="flex justify-between items-center mb-6">
+                                <h3 className="text-sm font-bold text-white">Activity</h3>
+                                <div className="flex gap-2 text-[10px] font-bold">
+                                    <span className="text-white bg-white/10 px-2 py-1 rounded">7D</span>
+                                    <span className="text-muted px-2 py-1">30D</span>
+                                </div>
+                            </div>
+                            <div className="h-32 flex items-end justify-between gap-2 px-2">
+                                {[40, 65, 45, 80, 55, 90, 70].map((h, i) => (
+                                    <div key={i} className="w-full bg-white/5 rounded-t relative group hover:bg-white/10 transition-colors">
+                                        <div className="absolute bottom-0 w-full bg-gradient-to-t from-neon/30 to-neon rounded-t" style={{height: `${h}%`}}></div>
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="flex justify-between mt-3 text-[9px] text-muted font-mono uppercase">
+                                <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+                            </div>
+                        </div>
+
+                        {/* Additional Metrics */}
+                        <div className="space-y-3">
+                            <div className="glass-panel p-4 rounded-xl flex justify-between items-center">
+                                <div className="flex items-center gap-3">
+                                    <Icon icon="Clock" size={18} className="text-white" />
+                                    <div>
+                                        <p className="text-xs font-bold text-white">Avg. View Duration</p>
+                                        <p className="text-[10px] text-muted">Video content</p>
+                                    </div>
+                                </div>
+                                <span className="text-sm font-bold text-white">1m 42s</span>
+                            </div>
+                            <div className="glass-panel p-4 rounded-xl flex justify-between items-center">
+                                <div className="flex items-center gap-3">
+                                    <Icon icon="Users" size={18} className="text-white" />
+                                    <div>
+                                        <p className="text-xs font-bold text-white">Returning Viewers</p>
+                                        <p className="text-[10px] text-muted">Loyalty metric</p>
+                                    </div>
+                                </div>
+                                <span className="text-sm font-bold text-white">1.2K</span>
+                            </div>
+                        </div>
+                    </ViewWrapper>
+                </div>
+            );
+        };
+
+        // 5. BRAND INTERACTIONS
+        const BrandInteractionView = ({ onBack, onScroll }) => {
+            const brands = RAW_POSTS.filter(p => p.seenBy);
+
+            const handleImgError = (e, name) => {
+                const parent = e.target.parentNode;
+
+                 // Remove the broken image
+                 e.target.remove();
+
+                 // Create text fallback (brand initials)
+                 parent.textContent = name
+                 .split(' ')
+                   .map(word => word[0])
+                 .join('')
+                 .slice(0, 2)
+                 .toUpperCase();
+
+                 parent.style.display = 'flex';
+                 parent.style.alignItems = 'center';
+                 parent.style.justifyContent = 'center';
+                 parent.style.color = '#000';
+                 parent.style.fontWeight = '700';
+                 parent.style.fontSize = '11px';
+                 parent.style.background = '#fff';
+            };
+
+            return (
+                <div className="flex flex-col h-full bg-[#020205] animate-slide-in">
+                    <SectionHeader title="Brand Interactions" onBack={onBack} />
+                    <ViewWrapper onScroll={onScroll}>
+                        <p className="text-xs text-muted/60 mb-6 px-2 leading-relaxed">
+                            Official acknowledgments from brands. Verified interactions boost your partner status.
+                        </p>
+                        <div className="space-y-3">
+                            {brands.map((item, i) => {
+                                const logoUrl = BRAND_LOGOS[item.seenBy] || "https://cdn.simpleicons.org/adirexx";
+                                return (
+                                    <div key={i} className="glass-panel p-4 rounded-xl flex items-center justify-between group active:scale-[0.99] transition-transform animate-slide-in" style={{animationDelay: `${i * 50}ms`}}>
+                                        <div className="flex items-center gap-4">
+                                            <div className="brand-logo-container">
+                                                <img 
+                                                    src={BRAND_LOGOS[item.seenBy]}
+                                                    alt={item.seenBy} 
+                                                    className="brand-logo-img"
+                                                    onError={(e) => handleImgError(e, item.seenBy)}
+                                                />
+                                            </div>
+                                            <div>
+                                                <h4 className="text-sm font-bold text-white mb-2">{item.seenBy}</h4>
+                                                <div className="brand-pill">
+                                                    <div className="brand-pill-dot"></div>
+                                                    <span className="brand-pill-text">Seen by {item.seenBy}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="flex flex-col items-end gap-2">
+                                            <div className="text-[10px] text-muted font-medium bg-white/5 px-2 py-1 rounded border border-white/5">
+                                                View
+                                            </div>
+                                            <div className="flex items-center gap-1 text-[9px] text-muted/50 font-medium">
+                                                <Icon icon="Clock" size={10} />
+                                                <span>{item.time} ago</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    </ViewWrapper>
+                </div>
+            );
+        };
+
+        // 6. HUBS (Expanded)
+        const SecurityView = ({ onBack, onScroll }) => (
+            <div className="flex flex-col h-full bg-[#020205] animate-slide-in">
+                <SectionHeader title="Security Center" onBack={onBack} />
+                <ViewWrapper onScroll={onScroll}>
+                    <div className="glass-panel p-6 rounded-2xl text-center mb-4">
+                        <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4 border border-white/10">
+                            <Icon icon="Shield" size={28} className="text-white" />
+                        </div>
+                        <h2 className="font-heading text-xl font-bold text-white">Protected</h2>
+                        <p className="text-xs text-muted mt-2">Account status: Secure</p>
+                    </div>
+                    <div className="space-y-2">
+                         <div className="glass-panel p-4 rounded-xl flex justify-between items-center">
+                            <span className="text-sm text-white font-medium">Password Manager</span>
+                            <span className="text-[10px] text-neon">Active</span>
+                        </div>
+                         <div className="glass-panel p-4 rounded-xl flex justify-between items-center">
+                            <span className="text-sm text-white font-medium">Login Activity</span>
+                            <span className="text-[10px] text-muted">2 Devices</span>
+                        </div>
+                         <div className="glass-panel p-4 rounded-xl flex justify-between items-center">
+                            <span className="text-sm text-white font-medium">Data Export</span>
+                            <span className="text-[10px] text-neon">Request</span>
+                        </div>
+                         <div className="glass-panel p-4 rounded-xl flex justify-between items-center">
+                            <span className="text-sm text-white font-medium">2FA</span>
+                            <span className="text-[10px] text-neon">Enabled</span>
+                        </div>
+                    </div>
+                </ViewWrapper>
+            </div>
+        );
+
+        const SupportView = ({ onBack, onScroll }) => (
+            <div className="flex flex-col h-full bg-[#020205] animate-slide-in">
+                <SectionHeader title="Help & Support" onBack={onBack} />
+                <ViewWrapper onScroll={onScroll}>
+                    <div className="space-y-3">
+                        <div className="glass-panel p-4 rounded-xl flex items-center gap-4">
+                            <Icon icon="Wallet" size={20} className="text-white" />
+                            <div className="flex-1">
+                                <h4 className="text-sm font-bold text-white">Withdrawals</h4>
+                                <p className="text-[10px] text-muted">Payment status & help</p>
+                            </div>
+                        </div>
+                        <div className="glass-panel p-4 rounded-xl flex items-center gap-4">
+                            <Icon icon="Mail" size={20} className="text-white" />
+                            <div className="flex-1">
+                                <h4 className="text-sm font-bold text-white">Ticket History</h4>
+                                <p className="text-[10px] text-muted">View past inquiries</p>
+                            </div>
+                        </div>
+                        <div className="glass-panel p-4 rounded-xl flex items-center gap-4">
+                            <Icon icon="Activity" size={20} className="text-white" />
+                            <div className="flex-1">
+                                <h4 className="text-sm font-bold text-white">Live Chat</h4>
+                                <p className="text-[10px] text-accent-green">Agents Online</p>
+                            </div>
+                        </div>
+                        <button className="w-full mt-4 bg-white text-black py-3 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-gray-200 transition-colors">
+                            Start New Ticket
+                        </button>
+                    </div>
+                </ViewWrapper>
+            </div>
+        );
+
+        // --- MAIN APP ---
+        const DashboardCard = ({ icon, title, value, subtext, onClick, color = "text-white", delay="0s" }) => (
+            <div onClick={onClick} className="glass-panel rounded-2xl p-5 relative overflow-hidden active:scale-[0.98] transition-all cursor-pointer group animate-slide-in" style={{ animationDelay: delay }}>
+                <div className="flex justify-between items-start mb-3">
+                    <div className="flex items-center gap-3">
+                        <div className={`p-2 rounded-xl bg-white/5 border border-white/5 group-hover:bg-white/10 transition-colors`}>
+                            <Icon icon={icon} size={20} className={color} />
+                        </div>
+                        <span className="text-sm font-medium text-muted group-hover:text-white transition-colors">{title}</span>
+                    </div>
+                    <Icon icon="ChevronRight" size={16} className="text-muted/30 group-hover:text-white transition-colors" />
+                </div>
+                <div className="pl-1">
+                    <h3 className="font-heading font-bold text-2xl text-white tracking-tight mb-1 group-hover:scale-105 transition-transform origin-left">{value}</h3>
+                    <p className="text-[11px] text-muted font-medium">{subtext}</p>
+                </div>
+            </div>
+        );
+
+        const App = () => {
+            const [view, setView] = useState('dashboard');
+            const [activeTab, setActiveTab] = useState('myspace');
+            const [navVisible, setNavVisible] = useState(true);
+            const scrollTimer = useRef(null);
+            const lastY = useRef(0);
+
+            // HOMEPAGE STYLE SCROLL LOGIC
+            const handleScroll = (e) => {
+                const currentY = e.target.scrollTop;
+                
+                // 1. Hide immediately on scroll
+                setNavVisible(false);
+                
+                // 2. Clear previous timer
+                if (scrollTimer.current) clearTimeout(scrollTimer.current);
+                
+                // 3. Show after stop (debounce)
+                scrollTimer.current = setTimeout(() => {
+                    setNavVisible(true);
+                }, 500); // 0.5s pause to reappear
+
+                lastY.current = currentY;
+            };
+
+            const renderContent = () => {
+                if (activeTab !== 'myspace') return <div className="h-full flex flex-col items-center justify-center text-neon font-heading tracking-widest text-sm opacity-50">NAVIGATING...</div>;
+                
+                // Pass handleScroll to all views so they trigger the nav logic
+                if (view === 'earnings') return <EarningsView onBack={() => setView('dashboard')} onScroll={handleScroll} />;
+                if (view === 'rqs') return <RQSView onBack={() => setView('dashboard')} onScroll={handleScroll} />;
+                if (view === 'monetization') return <MonetizationView onBack={() => setView('dashboard')} onScroll={handleScroll} />;
+                if (view === 'analytics') return <AnalyticsView onBack={() => setView('dashboard')} onScroll={handleScroll} />;
+                if (view === 'brands') return <BrandInteractionView onBack={() => setView('dashboard')} onScroll={handleScroll} />;
+                if (view === 'security') return <SecurityView onBack={() => setView('dashboard')} onScroll={handleScroll} />;
+                if (view === 'support') return <SupportView onBack={() => setView('dashboard')} onScroll={handleScroll} />;
+
+                // Dashboard Home
+                return (
+                    <div className="flex flex-col h-full pt-20 pb-32 animate-slide-in">
+                        <div className="header-glass fixed top-0 left-0 w-full px-5 flex items-center justify-between h-[65px]">
+                            <div className="flex items-center gap-3">
+                                <img src={USER_DATA.avatar} className="w-9 h-9 rounded-full bg-white/5 border border-white/10 shadow-lg" alt="Profile" />
+                                <div>
+                                    <h1 className="font-heading text-base font-bold text-white leading-tight tracking-wide">My Space</h1>
+                                    <p className="text-[10px] text-muted font-medium tracking-wide">Creator Studio</p>
+                                </div>
+                            </div>
+                            <button onClick={() => setView('settings')} className="p-2 rounded-full bg-white/5 text-muted border border-white/5 hover:text-white transition-colors">
+                                <Icon icon="Settings" size={18} />
+                            </button>
+                        </div>
+
+                        <ViewWrapper onScroll={handleScroll}>
+                            
+                            <DashboardCard 
+                                icon="Wallet" 
+                                title="Revenue" 
+                                value={`₹${DATA_STORE.earnings.total.toLocaleString()}`} 
+                                subtext="Last 30 days: +₹3,400" 
+                                color="text-neon" 
+                                onClick={() => setView('earnings')} 
+                                delay="0ms" 
+                            />
+
+                            <div onClick={() => setView('rqs')} className="glass-panel rounded-2xl p-5 relative overflow-hidden active:scale-[0.98] transition-all cursor-pointer group animate-slide-in" style={{ animationDelay: '100ms' }}>
+                                <div className="flex justify-between items-center mb-3">
+                                    <div className="flex items-center gap-3">
+                                        <div className="bg-gradient-to-r from-neon to-blue-600 px-2 py-1 rounded text-[10px] font-black text-white tracking-widest shadow-lg shadow-neon/20">RQS</div>
+                                        <span className="text-sm font-medium text-muted group-hover:text-white transition-colors">Reputation</span>
+                                    </div>
+                                    <Icon icon="ChevronRight" size={16} className="text-muted/30 group-hover:text-white transition-colors" />
+                                </div>
+                                <div className="pl-1">
+                                    <h3 className="font-heading font-bold text-2xl text-white tracking-tight mb-1">{USER_DATA.rqs} <span className="text-sm font-normal text-muted">/ 100</span></h3>
+                                    <p className="text-[11px] text-white/80 font-bold uppercase tracking-wide">Reputed Reviewer</p>
+                                </div>
+                            </div>
+
+                            <div onClick={() => setView('monetization')} className="glass-panel rounded-2xl p-5 relative overflow-hidden active:scale-[0.98] transition-all cursor-pointer group animate-slide-in" style={{ animationDelay: '200ms' }}>
+                                <div className="flex justify-between items-center mb-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2 rounded-xl bg-white/5 border border-white/5 group-hover:border-neon/30 transition-colors">
+                                            <Icon icon="Zap" size={20} className="text-neon" />
+                                        </div>
+                                        <span className="text-sm font-medium text-muted group-hover:text-white transition-colors">Partner Program</span>
+                                    </div>
+                                    <span className="text-xs font-bold text-white bg-neon/20 px-2 py-0.5 rounded text-neon border border-neon/20">Level 1</span>
+                                </div>
+                                <div className="h-1.5 w-full bg-white/5 rounded-full relative mt-2">
+                                    <div className="h-full bg-neon rounded-full w-[60%] shadow-[0_0_8px_var(--neon)] relative">
+                                        <div className="glow-tip"></div>
+                                    </div>
+                                </div>
+                                <p className="text-[10px] text-muted mt-3">Active Progression</p>
+                            </div>
+
+                            <DashboardCard 
+                                icon="Chart" 
+                                title="Insights" 
+                                value="45.2K Views" 
+                                subtext="Engagement up 12%" 
+                                color="text-white" 
+                                onClick={() => setView('analytics')} 
+                                delay="300ms" 
+                            />
+
+                            <div className="mt-6 animate-slide-in" style={{ animationDelay: '350ms' }}>
+                                <div className="flex items-center justify-between mb-3 px-1">
+                                    <h3 className="text-xs font-bold text-muted uppercase tracking-wider">Brand Interactions</h3>
+                                    <button onClick={() => setView('brands')} className="text-[10px] text-neon flex items-center gap-1 hover:text-white transition-colors">View All <Icon icon="ChevronRight" size={10} /></button>
+                                </div>
+                                <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2 snap-x">
+                                    {RAW_POSTS.filter(p => p.seenBy).slice(0, 5).map((b, i) => (
+                                        <div key={i} className="snap-start shrink-0 glass-panel rounded-xl p-3 min-w-[100px] active:bg-white/5 transition-colors">
+                                            <div className="w-8 h-8 rounded bg-white flex items-center justify-center mb-2 shadow-sm overflow-hidden p-1">
+                                                <img src={BRAND_LOGOS[b.seenBy] || "https://cdn.simpleicons.org/adirexx"} className="w-full h-full object-contain" />
+                                            </div>
+                                            <p className="text-[10px] font-bold text-white truncate">{b.seenBy}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="mt-2 mb-8 pt-6 border-t border-white/5 animate-slide-in" style={{ animationDelay: '400ms' }}>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <button onClick={() => setView('security')} className="glass-panel p-4 rounded-xl flex flex-col items-center justify-center gap-2 hover:bg-white/5 transition-colors active:scale-95">
+                                        <Icon icon="Shield" size={20} className="text-muted" />
+                                        <span className="text-xs font-bold text-muted">Security</span>
+                                    </button>
+                                    <button onClick={() => setView('support')} className="glass-panel p-4 rounded-xl flex flex-col items-center justify-center gap-2 hover:bg-white/5 transition-colors active:scale-95">
+                                        <Icon icon="Help" size={20} className="text-muted" />
+                                        <span className="text-xs font-bold text-muted">Support</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </ViewWrapper>
+                    </div>
+                );
+            };
+
+            const NavItem = ({ icon, label, isActive, onClick, isMySpace }) => (
+                <button onClick={onClick} className={`flex-1 flex flex-col items-center justify-center gap-1 group relative active:scale-90 transition-transform h-full`}>
+                    <div className={`relative p-1.5 rounded-xl transition-all duration-300 ${isActive ? 'bg-white/5 scale-105' : ''}`}>
+                        <Icon icon={icon} size={24} className={`transition-all duration-300 ${isActive ? 'text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.5)]' : 'text-muted group-hover:text-white'}`} />
+                        {isMySpace && isActive && <div className="absolute inset-0 bg-neon/20 blur-xl rounded-full"></div>}
+                    </div>
+                </button>
+            );
+
+            const BottomNav = ({ activeTab, setActiveTab }) => (
+                <div className="fixed bottom-0 w-full h-[65px] px-2 pb-2 flex justify-between items-center z-40 bg-[#020205]/95 backdrop-blur-xl border-t border-white/10 max-w-[450px]">
+                    <NavItem icon="Home" label="Home" isActive={activeTab === 'home'} onClick={() => goTo('HOMEPAGE_FINAL.HTML')} />
+                    <NavItem icon="Grid" label="Categories" isActive={activeTab === 'categories'} onClick={() => goTo('CATAGORYPAGE.HTML')} />
+                    <NavItem icon="MySpaceLogo" label="My Space" isActive={activeTab === 'myspace'} onClick={() => setActiveTab('myspace')} isMySpace={true} />
+                    <NavItem icon="Bell" label="Notifications" isActive={activeTab === 'notifs'} onClick={() => goTo('NOTIFICATION PANEL.HTML')} />
+                    <NavItem icon="User" label="Profile" isActive={activeTab === 'profile'} onClick={() => goTo('PRIVATE OWNER PROFILE.HTML')} />
+                </div>
+            );
+
+            return (
+                <div className="flex-1 flex flex-col relative h-full">
+                    <div className="flex-1 overflow-hidden relative">
+                         {renderContent()}
+                    </div>
+                    {/* NAV BAR with Slide Transition */}
+                    <div className={`absolute bottom-0 w-full transition-transform duration-300 ${navVisible ? 'translate-y-0' : 'translate-y-full'}`}>
+                        <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
+                    </div>
+                </div>
+            );
+        };
+
+        const root = createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
