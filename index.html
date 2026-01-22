@@ -14,6 +14,9 @@
     <meta name="theme-color" content="#020205"> 
     <link rel="icon" href="./icon-192.png">
     <link rel="icon" href="./icon-512.png">
+ 
+    <script type="module" src="./supabase.js"></script>
+    <script type="module" src="./auth.js"></script>
     
     <!-- 1. Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -123,17 +126,27 @@
         const [formData, setFormData] = useState({ name: '', email: '', more: '' });
         const [code, setCode] = useState('');
 
-        const handleSignupSubmit = (e) => {
-            e.preventDefault();
-            // Simulate sending data to email
-            fetch("https://formspree.io/f/xkowzkjz", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({name: formData.name, email: formData.email, note: formData.more, source: "Landing Signup"})
-            }).then(() => {
-                setStep(2);
-            });
+        const handleSignupSubmit = async (e) => {
+          e.preventDefault();
+
+          try {
+            await window.signUpUser(
+              formData.email,
+              "TempPassword@123"
+            );
+
+            // If signup succeeds → move to beta code
             setStep(2);
+
+          } catch (error) {
+            // Supabase throws error if user already exists
+            if (error.message?.toLowerCase().includes("already registered")) {
+              setStep(2); // allow existing users too
+            } else {
+              console.error(error);
+              alert("Signup failed. Please try again.");
+            }
+          }
         };
 
         const handleCodeSubmit = (e) => {
@@ -226,8 +239,7 @@
 
     // --- REQUEST ACCESS MODAL ---
     const RequestAccessModal = ({ onClose }) => {
-        const [formData, setFormData] = useState({ name: '', email: '', reason: '' });
-
+        const [formData, setFormData] = useState({name: '',email: '',password: ''})
         const handleSubmit = (e) => {
             e.preventDefault();
             // Simulate sending to specific email
