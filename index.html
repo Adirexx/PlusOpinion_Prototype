@@ -15,8 +15,6 @@
     <link rel="icon" href="./icon-192.png">
     <link rel="icon" href="./icon-512.png">
  
-    <script type="module" src="./supabase.js"></script>
-    <script type="module" src="./auth.js"></script>
     
     <!-- 1. Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -126,40 +124,25 @@
         const [formData, setFormData] = useState({ name: '', email: '', more: '' });
         const [code, setCode] = useState('');
 
-        const handleSignupSubmit = async (e) => {
-          e.preventDefault();
-
-          // ✅ PASSWORD MATCH CHECK (ADD HERE)
-          if (formData.password !== formData.confirmPassword) {
-            alert("Passwords do not match");
-            return;
-          }
-
-          try {
-            await window.signUpUser(
-              formData.email,
-              formData.password,
-              formData.name
-            );
-
-            // If signup succeeds → move to beta code
+        const handleSignupSubmit = (e) => {
+            e.preventDefault();
+            // Simulate sending data to email
+            fetch("https://formspree.io/f/xkowzkjz", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({name: formData.name, email: formData.email, note: formData.more, source: "Landing Signup"})
+            }).then(() => {
+                setStep(2);
+            });
             setStep(2);
-
-          } catch (error) {
-            // Supabase throws error if user already exists
-            if (error.message?.toLowerCase().includes("already registered")) {
-              setStep(2); // allow existing users too
-            } else {
-              console.error(error);
-              alert("Signup failed. Please try again.");
-            }
-          }
         };
 
         const handleCodeSubmit = (e) => {
             e.preventDefault();
             if (code.trim().toUpperCase() === 'AYREXX2025') {
-  
+                // Temporary access flag (prototype-safe)
+                sessionStorage.setItem('plusopinion_access', 'granted');
+
                 // Redirect to actual app
                 window.location.href = 'HOMEPAGE_FINAL.HTML';
             } else {
@@ -184,68 +167,41 @@
 
                     {step === 1 ? (
                         <form onSubmit={handleSignupSubmit} className="space-y-4">
-                          <div>
-    <label className="text-xs font-bold text-slate-500 ml-2 mb-1 block uppercase">
-      Full Name
-    </label>
-    <input
-      required
-      value={formData.name}
-      onChange={e => setFormData({ ...formData, name: e.target.value })}
-      type="text"
-      className="w-full bg-[#050a15] border border-white/10 px-6 py-4 rounded-2xl text-white"
-      placeholder="John Doe"
-    />
-  </div>
-
-  <div>
-    <label className="text-xs font-bold text-slate-500 ml-2 mb-1 block uppercase">
-      Email Address
-    </label>
-    <input
-      required
-      value={formData.email}
-      onChange={e => setFormData({ ...formData, email: e.target.value })}
-      type="email"
-      className="w-full bg-[#050a15] border border-white/10 px-6 py-4 rounded-2xl text-white"
-      placeholder="john@example.com"
-    />
-  </div>
-
-  <div>
-    <label className="text-xs font-bold text-slate-500 ml-2 mb-1 block uppercase">
-      Password
-    </label>
-    <input
-      required
-      value={formData.password || ""}
-      onChange={e => setFormData({ ...formData, password: e.target.value })}
-      type="password"
-      className="w-full bg-[#050a15] border border-white/10 px-6 py-4 rounded-2xl text-white"
-      placeholder="Create a secure password"
-    />
-  </div>
-
-  <div>
-    <label className="text-xs font-bold text-slate-500 ml-2 mb-1 block uppercase">
-      Confirm Password
-    </label>
-    <input
-      required
-      value={formData.confirmPassword || ""}
-      onChange={e =>
-        setFormData({ ...formData, confirmPassword: e.target.value })
-      }
-      type="password"
-      className="w-full bg-[#050a15] border border-white/10 px-6 py-4 rounded-2xl text-white"
-      placeholder="Confirm password"
-    />
-  </div>
-
-  <button className="w-full bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-2xl font-bold">
-    CREATE ACCOUNT
-  </button>
-</form>
+                            <div>
+                                <label className="text-xs font-bold text-slate-500 ml-2 mb-1 block uppercase">Full Name <span className="text-red-500">*</span></label>
+                                <input 
+                                    required
+                                    value={formData.name}
+                                    onChange={e => setFormData({...formData, name: e.target.value})}
+                                    type="text" 
+                                    placeholder="John Doe" 
+                                    className="w-full bg-[#050a15] border border-white/10 px-6 py-4 rounded-2xl outline-none focus:border-blue-500/50 text-white text-sm transition-all" 
+                                />
+                            </div>
+                            <div>
+                                <label className="text-xs font-bold text-slate-500 ml-2 mb-1 block uppercase">Email Address <span className="text-red-500">*</span></label>
+                                <input 
+                                    required
+                                    value={formData.email}
+                                    onChange={e => setFormData({...formData, email: e.target.value})}
+                                    type="email" 
+                                    placeholder="john@example.com" 
+                                    className="w-full bg-[#050a15] border border-white/10 px-6 py-4 rounded-2xl outline-none focus:border-blue-500/50 text-white text-sm transition-all" 
+                                />
+                            </div>
+                            <div>
+                                <label className="text-xs font-bold text-slate-500 ml-2 mb-1 block uppercase">Tell us more (Optional)</label>
+                                <textarea 
+                                    value={formData.more}
+                                    onChange={e => setFormData({...formData, more: e.target.value})}
+                                    placeholder="Anything else you'd like to share..." 
+                                    className="w-full bg-[#050a15] border border-white/10 px-6 py-4 rounded-2xl outline-none focus:border-blue-500/50 text-white text-sm transition-all h-24 resize-none" 
+                                ></textarea>
+                            </div>
+                            <button className="w-full bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-2xl font-bold tracking-wide transition-all shadow-lg active:scale-95 flex items-center justify-center gap-3">
+                                PROCEED TO CODE <Icon d={icons.arrowRight} size={18}/>
+                            </button>
+                        </form>
                     ) : (
                         <form onSubmit={handleCodeSubmit} className="space-y-6">
                             <div className="relative animate-up">
@@ -271,7 +227,8 @@
 
     // --- REQUEST ACCESS MODAL ---
     const RequestAccessModal = ({ onClose }) => {
-        const [formData, setFormData] = useState({name: '',email: '',password: ''})
+        const [formData, setFormData] = useState({ name: '', email: '', reason: '' });
+
         const handleSubmit = (e) => {
             e.preventDefault();
             // Simulate sending to specific email
@@ -332,17 +289,10 @@
         const [modalType, setModalType] = useState(null);
         const [activeTab, setActiveTab] = useState('reviewers');
 
-        useEffect(() => {
-          async function checkSession() {
-            const user = await window.getCurrentUser();
-
-            if (user) {
-              // User already logged in
-              window.location.replace("HOMEPAGE_FINAL.HTML");
+        useEffect(() => { 
+            if (sessionStorage.getItem('plusopinion_access') === 'granted') {
+                window.location.replace('HOMEPAGE_FINAL.HTML');
             }
-          }
-
-          checkSession();
         }, []);
 
         return (
