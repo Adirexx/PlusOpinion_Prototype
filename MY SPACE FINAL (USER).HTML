@@ -1,36 +1,46 @@
 <!DOCTYPE html>
 <html lang="en" class="dark">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PlusOpinion - My Space (Final)</title>
 
-    <!-- Favicon for browser tabs -->
-    <link rel="icon" type="image/png" sizes="32x32" href="/icon-192.png">
-    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="/icon-192.png">
+    <!-- SEO Meta Tags -->
+    <title>My Space - PlusOpinion | Your Reviews & Earnings Dashboard</title>
+    <meta name="description"
+        content="Manage your PlusOpinion profile, track your earnings, view your reputation score, and monitor your review analytics.">
+    <meta name="robots" content="noindex, nofollow">
 
-    <link rel="manifest" href="./manifest.json">
-    <meta name="theme-color" content="#020205"> 
-    <link rel="icon" href="./icon-192.png">
-    <link rel="icon" href="./icon-512.png">
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-D42E61TP4M"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', 'G-D42E61TP4M');
+    </script>
 
-    
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap"
+        rel="stylesheet">
 
     <!-- Global Design System -->
     <link rel="stylesheet" href="./global.css">
 
     <link rel="manifest" href="./manifest.json">
     <meta name="theme-color" content="#020205">
-    
+
+    <!-- Supabase UMD bundle (must load before supabase.js) -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script type="module" src="./supabase.js"></script>
+
     <!-- Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="./runtime.js"></script>
-    <script src="./bridge.js"></script> 
+    <script src="./bridge.js"></script>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -41,18 +51,19 @@
             --font-body: 'Inter', system-ui, -apple-system, sans-serif;
             --font-heading: 'Space Grotesk', system-ui, serif;
 
-            --bg-deep: #020205; 
-            --neon: #2f8bff;            
+            --bg-deep: #020205;
+            --neon: #2f8bff;
             --neon-glow: rgba(47, 139, 255, 0.6);
             --card-bg: rgba(255, 255, 255, 0.03);
             --glass-border: rgba(255, 255, 255, 0.08);
-            
-            --success: #00E676; 
+
+            --success: #00E676;
             --gold: #FFD700;
             --danger: #FF5252;
         }
 
-        html, body {
+        html,
+        body {
             height: 100%;
             margin: 0;
             overflow: hidden;
@@ -60,7 +71,7 @@
             color: white;
             font-family: var(--font-body);
         }
-        
+
         body {
             display: flex;
             justify-content: center;
@@ -70,45 +81,72 @@
         /* --- AMBIENT BACKGROUND --- */
         .ambient-bg {
             position: fixed;
-            top: 0; left: 0; width: 100vw; height: 100vh;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
             background: radial-gradient(circle at 50% 0%, #050814 0%, var(--bg-deep) 90%);
             z-index: -2;
             pointer-events: none;
         }
-        
+
         .orb {
             position: absolute;
             border-radius: 50%;
             filter: blur(120px);
             z-index: -1;
-            opacity: 0.2; 
+            opacity: 0.2;
             animation: pulse-glow 10s infinite ease-in-out alternate;
         }
-        .orb-1 { top: -20%; left: -10%; width: 80vw; height: 80vw; background: radial-gradient(circle, var(--neon), transparent); }
-        .orb-2 { bottom: -20%; right: -10%; width: 80vw; height: 80vw; background: radial-gradient(circle, #1e3a8a, transparent); animation-delay: -5s; }
+
+        .orb-1 {
+            top: -20%;
+            left: -10%;
+            width: 80vw;
+            height: 80vw;
+            background: radial-gradient(circle, var(--neon), transparent);
+        }
+
+        .orb-2 {
+            bottom: -20%;
+            right: -10%;
+            width: 80vw;
+            height: 80vw;
+            background: radial-gradient(circle, #1e3a8a, transparent);
+            animation-delay: -5s;
+        }
 
         @keyframes pulse-glow {
-            0% { transform: scale(1); opacity: 0.2; }
-            100% { transform: scale(1.1); opacity: 0.3; }
+            0% {
+                transform: scale(1);
+                opacity: 0.2;
+            }
+
+            100% {
+                transform: scale(1.1);
+                opacity: 0.3;
+            }
         }
 
         /* --- CONTAINER --- */
         #root {
             width: 100%;
             height: 100%;
-            max-width: 450px; 
-            background: rgba(2, 2, 5, 0.85); 
-            backdrop-filter: blur(20px); 
+            max-width: 450px;
+            background: rgba(2, 2, 5, 0.85);
+            backdrop-filter: blur(20px);
             position: relative;
             display: flex;
             flex-direction: column;
-            box-shadow: 0 0 50px rgba(0,0,0,0.9);
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.9);
             overflow: hidden;
         }
 
         /* --- UTILITIES --- */
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
         .view-content {
             flex: 1;
             overflow-y: auto;
@@ -124,6 +162,7 @@
             border: 1px solid var(--glass-border);
             transition: border-color 0.2s, background 0.2s;
         }
+
         .glass-panel:active {
             background: rgba(255, 255, 255, 0.05);
             border-color: rgba(47, 139, 255, 0.3);
@@ -136,22 +175,41 @@
             z-index: 50;
         }
 
-        .font-heading { font-family: var(--font-heading); }
+        .font-heading {
+            font-family: var(--font-heading);
+        }
 
         /* --- ANIMATIONS --- */
         @keyframes slideInRight {
-            from { opacity: 0; transform: translateX(20px); }
-            to { opacity: 1; transform: translateX(0); }
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
         }
+
         .animate-slide-in {
             animation: slideInRight 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
         }
 
         @keyframes glow-move {
-            0% { box-shadow: 0 0 5px var(--neon); }
-            50% { box-shadow: 0 0 15px var(--neon), 0 0 5px white; }
-            100% { box-shadow: 0 0 5px var(--neon); }
+            0% {
+                box-shadow: 0 0 5px var(--neon);
+            }
+
+            50% {
+                box-shadow: 0 0 15px var(--neon), 0 0 5px white;
+            }
+
+            100% {
+                box-shadow: 0 0 5px var(--neon);
+            }
         }
+
         .glow-tip {
             position: absolute;
             right: 0;
@@ -172,33 +230,71 @@
             transform: rotate(-90deg);
             transform-origin: 50% 50%;
         }
-        
+
         .neon-filter {
             filter: drop-shadow(0 0 8px var(--neon)) drop-shadow(0 0 15px var(--neon));
         }
 
         /* Pill & Logo Styles */
         .brand-pill {
-            background: #0D111C; 
-            border: 1px solid rgba(255, 255, 255, 0.15); 
-            border-radius: 6px; 
+            background: #0D111C;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 6px;
             padding: 4px 10px;
             display: inline-flex;
             align-items: center;
             gap: 6px;
         }
-        .brand-pill-dot { width: 6px; height: 6px; background-color: var(--neon); border-radius: 50%; box-shadow: 0 0 6px var(--neon); }
-        .brand-pill-text { color: white; font-weight: 600; font-size: 11px; letter-spacing: 0.02em; }
+
+        .brand-pill-dot {
+            width: 6px;
+            height: 6px;
+            background-color: var(--neon);
+            border-radius: 50%;
+            box-shadow: 0 0 6px var(--neon);
+        }
+
+        .brand-pill-text {
+            color: white;
+            font-weight: 600;
+            font-size: 11px;
+            letter-spacing: 0.02em;
+        }
 
         .brand-logo-container {
-            width: 42px; height: 42px; background: white; border-radius: 10px;
-            display: flex; align-items: center; justify-content: center; padding: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            width: 42px;
+            height: 42px;
+            background: white;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
         }
-        .brand-logo-img { width: 100%; height: 100%; object-fit: contain; filter: grayscale(100%); transition: filter 0.2s; }
-        .group:hover .brand-logo-img { filter: grayscale(0%); }
 
+        .brand-logo-img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            filter: grayscale(100%);
+            transition: filter 0.2s;
+        }
+
+        .group:hover .brand-logo-img {
+            filter: grayscale(0%);
+        }
     </style>
+
+    <script>
+        import { supabase } from "./supabase.js";
+
+        supabase.auth.onAuthStateChange((event, session) => {
+            if (!session) {
+                window.location.href = "index.html";
+            }
+        });
+    </script>
 
     <script>
         tailwind.config = {
@@ -220,12 +316,13 @@
         }
     </script>
 </head>
+
 <body>
     <div class="ambient-bg">
         <div class="orb orb-1"></div>
         <div class="orb orb-2"></div>
     </div>
-    
+
     <div id="root"></div>
 
     <script type="text/babel">
@@ -239,13 +336,13 @@
         };
 
         function dispatchAction(action) {
-          if (window.PlusOpinionActions && window.PlusOpinionActions[action]) {
-            // Already on homepage
-            window.PlusOpinionActions[action]();
-          }else {
-            // On another page → redirect with hash
-            window.location.href = `HOMEPAGE_FINAL.HTML#${action.replace('open', '').toLowerCase()}`;
-          }
+            if (window.PlusOpinionActions && window.PlusOpinionActions[action]) {
+                // Already on homepage
+                window.PlusOpinionActions[action]();
+            } else {
+                // On another page → redirect with hash
+                window.location.href = `HOMEPAGE_FINAL.HTML#${action.replace('open', '').toLowerCase()}`;
+            }
         }
 
         const triggerAction = (action) => {
@@ -256,40 +353,40 @@
             }
         };
 
-         // 🔁 PAGE → TAB MAP (GLOBAL)
-         const PAGE_TAB_MAP = { 
-           'HOMEPAGE_FINAL.HTML': 'home',
-           'CATAGORYPAGE.HTML': 'categories',
-           'MY SPACE FINAL (USER).HTML': 'myspace',
-           'NOTIFICATION PANEL.HTML': 'notifs',
-           'PRIVATE OWNER PROFILE.HTML': 'profile'
+        // 🔁 PAGE → TAB MAP (GLOBAL)
+        const PAGE_TAB_MAP = {
+            'HOMEPAGE_FINAL.HTML': 'home',
+            'CATAGORYPAGE.HTML': 'categories',
+            'MY SPACE FINAL (USER).HTML': 'myspace',
+            'NOTIFICATION PANEL.HTML': 'notifs',
+            'PRIVATE OWNER PROFILE.HTML': 'profile'
         };
 
         // --- ICONS ---
         const Icons = {
-            ArrowLeft: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>,
-            Settings: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.74v-.47a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>,
-            ChevronRight: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>,
-            Wallet: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>,
-            Chart: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>,
-            Star: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>,
-            Zap: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>,
-            Shield: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/></svg>,
-            Help: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>,
-            Check: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>,
-            Clock: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>,
-            User: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
-            Home: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
-            Grid: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>,
-            Bell: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>,
-            Gift: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5"/></svg>,
-            MySpaceLogo: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M11 3L3 22" strokeLinejoin="bevel"/><path d="M21 22L11 3" strokeLinejoin="bevel"/><path d="M22 8L4 18" style={{transform: 'translateX(-5px) translateY(5px)', opacity: 1, stroke: 'var(--neon)'}} strokeWidth="2.5" /></svg>,
-            Lock: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>,
-            Download: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>,
-            Activity: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>,
-            Mail: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>,
-            Eye: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>,
-            Users: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>,
+            ArrowLeft: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12 19-7-7 7-7" /><path d="M19 12H5" /></svg>,
+            Settings: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.74v-.47a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" /><circle cx="12" cy="12" r="3" /></svg>,
+            ChevronRight: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6" /></svg>,
+            Wallet: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4" /><path d="M3 5v14a2 2 0 0 0 2 2h16v-5" /><path d="M18 12a2 2 0 0 0 0 4h4v-4Z" /></svg>,
+            Chart: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18" /><path d="m19 9-5 5-4-4-3 3" /></svg>,
+            Star: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>,
+            Zap: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>,
+            Shield: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" /></svg>,
+            Help: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" /><path d="M12 17h.01" /></svg>,
+            Check: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>,
+            Clock: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>,
+            User: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>,
+            Home: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>,
+            Grid: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="7" height="7" x="3" y="3" rx="1" /><rect width="7" height="7" x="14" y="3" rx="1" /><rect width="7" height="7" x="14" y="14" rx="1" /><rect width="7" height="7" x="3" y="14" rx="1" /></svg>,
+            Bell: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" /><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" /></svg>,
+            Gift: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="8" width="18" height="4" rx="1" /><path d="M12 8v13" /><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7" /><path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5" /></svg>,
+            MySpaceLogo: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M11 3L3 22" strokeLinejoin="bevel" /><path d="M21 22L11 3" strokeLinejoin="bevel" /><path d="M22 8L4 18" style={{ transform: 'translateX(-5px) translateY(5px)', opacity: 1, stroke: 'var(--neon)' }} strokeWidth="2.5" /></svg>,
+            Lock: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>,
+            Download: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" x2="12" y1="15" y2="3" /></svg>,
+            Activity: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2" /></svg>,
+            Mail: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="16" x="2" y="4" rx="2" /><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" /></svg>,
+            Eye: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" /><circle cx="12" cy="12" r="3" /></svg>,
+            Users: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>,
         };
 
         const Icon = ({ icon, size = 20, className = "" }) => {
@@ -300,20 +397,20 @@
 
         // --- DATA ---
         const BRAND_LOGOS = {
-          // SimpleIcons (verified)
-          "OnePlus": "https://cdn.simpleicons.org/oneplus/000000",
-          "LG India": "https://cdn.simpleicons.org/lg/000000",
-          "Sony": "https://cdn.simpleicons.org/sony/000000",
-          "Cursor": "https://cdn.simpleicons.org/cursor/000000",
-          "Nike": "https://cdn.simpleicons.org/nike/000000",
-          "Samsung": "https://cdn.simpleicons.org/samsung/000000",
-          "Tesla": "https://cdn.simpleicons.org/tesla/000000",
-          "Apple": "https://cdn.simpleicons.org/apple/000000",
+            // SimpleIcons (verified)
+            "OnePlus": "https://cdn.simpleicons.org/oneplus/000000",
+            "LG India": "https://cdn.simpleicons.org/lg/000000",
+            "Sony": "https://cdn.simpleicons.org/sony/000000",
+            "Cursor": "https://cdn.simpleicons.org/cursor/000000",
+            "Nike": "https://cdn.simpleicons.org/nike/000000",
+            "Samsung": "https://cdn.simpleicons.org/samsung/000000",
+            "Tesla": "https://cdn.simpleicons.org/tesla/000000",
+            "Apple": "https://cdn.simpleicons.org/apple/000000",
 
-          // ❌ NOT on SimpleIcons → Official SVGs
-          "Ola Electric": "https://upload.wikimedia.org/wikipedia/commons/7/7e/Ola_Electric_Logo.svg",
-          "Dyson": "https://upload.wikimedia.org/wikipedia/commons/1/14/Dyson_logo.svg",
-          "Rare Beauty": "https://upload.wikimedia.org/wikipedia/commons/4/4e/Rare_Beauty_logo.svg",
+            // ❌ NOT on SimpleIcons → Official SVGs
+            "Ola Electric": "https://upload.wikimedia.org/wikipedia/commons/7/7e/Ola_Electric_Logo.svg",
+            "Dyson": "https://upload.wikimedia.org/wikipedia/commons/1/14/Dyson_logo.svg",
+            "Rare Beauty": "https://upload.wikimedia.org/wikipedia/commons/4/4e/Rare_Beauty_logo.svg",
         };
 
         const RAW_POSTS = [
@@ -367,7 +464,7 @@
         // Wrapper to handle scroll hide/show separately for each view
         const ViewWrapper = ({ children, onScroll }) => {
             return (
-                <div 
+                <div
                     className="view-content px-4 pt-4 pb-24 space-y-4"
                     onScroll={onScroll}
                 >
@@ -397,7 +494,7 @@
                         <div className="absolute top-0 right-0 w-32 h-32 bg-neon/10 rounded-full blur-3xl -mr-10 -mt-10"></div>
                         <p className="text-muted text-xs font-medium uppercase tracking-wider mb-1">Total Estimated Revenue</p>
                         <h1 className="font-heading text-4xl font-bold text-white mb-6">₹{DATA_STORE.earnings.total.toLocaleString('en-IN')}</h1>
-                        
+
                         <div className="grid grid-cols-2 gap-4 border-t border-white/10 pt-4">
                             <div>
                                 <p className="text-[10px] text-muted uppercase">Last 30 Days</p>
@@ -462,7 +559,7 @@
                                         <span className="text-muted">₹{item.amount.toLocaleString()} ({item.percent}%)</span>
                                     </div>
                                     <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
-                                        <div className="h-full rounded-full transition-all duration-1000" style={{width: `${item.percent}%`, backgroundColor: item.color}}></div>
+                                        <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${item.percent}%`, backgroundColor: item.color }}></div>
                                     </div>
                                 </div>
                             ))}
@@ -478,7 +575,7 @@
 
         // 2. RQS VIEW (Correct Start Point & Bench)
         const RQSView = ({ onBack, onScroll }) => {
-            const score = USER_DATA.rqs; 
+            const score = USER_DATA.rqs;
             const radius = 90;
             const circumference = 2 * Math.PI * radius;
             const [dashOffset, setDashOffset] = useState(circumference);
@@ -486,14 +583,14 @@
             // Trigger Animation
             useEffect(() => {
                 const targetOffset = circumference - ((score / 100) * circumference);
-                setTimeout(() => setDashOffset(targetOffset), 300); 
+                setTimeout(() => setDashOffset(targetOffset), 300);
             }, []);
-            
+
             // Calculate benchmark position: 75% of circle from top
             // Top is 0 degrees (due to rotate(-90)). 75% of 360 is 270 degrees.
             // So we want the marker at 270 degrees clockwise from top.
             // Which corresponds to the 9 o'clock position (Left) visually.
-            
+
             return (
                 <div className="flex flex-col h-full bg-[#020205] animate-slide-in">
                     <SectionHeader title="Reputation Score" onBack={onBack} />
@@ -504,27 +601,27 @@
                                     {/* Track */}
                                     <circle cx="128" cy="128" r={radius} stroke="rgba(255,255,255,0.05)" strokeWidth="8" fill="none" />
                                     {/* Progress Circle - Rotated -90deg via CSS to start at 12 o'clock */}
-                                    <circle 
+                                    <circle
                                         className="progress-circle neon-filter"
-                                        cx="128" cy="128" r={radius} 
+                                        cx="128" cy="128" r={radius}
                                         stroke="var(--neon)" strokeWidth="8" fill="none"
                                         strokeDasharray={circumference}
                                         strokeDashoffset={dashOffset}
                                         strokeLinecap="round"
                                     />
                                 </svg>
-                                
+
                                 {/* BENCHMARK MARKER Logic:
                                     The circle starts at 12 o'clock (0deg).
                                     We want the marker at 75%.
                                     75% of 360deg = 270deg.
                                     So we rotate the marker container 270deg.
                                 */}
-                                <div className="absolute inset-0 pointer-events-none" style={{transform: 'rotate(270deg)'}}>
+                                <div className="absolute inset-0 pointer-events-none" style={{ transform: 'rotate(270deg)' }}>
                                     {/* Marker is at top (0deg) of this rotated container */}
                                     <div className="absolute top-[38px] left-1/2 -translate-x-1/2 w-0.5 h-4 bg-white/90 shadow-[0_0_8px_white]"></div>
                                 </div>
-                                
+
                                 {/* Label positioned at 9 o'clock (270deg) visually */}
                                 <div className="absolute top-1/2 -left-4 -translate-y-1/2 text-[9px] text-white/90 font-medium bg-black/60 px-2 py-0.5 rounded border border-white/10 backdrop-blur-md">
                                     Eligibility (75)
@@ -617,7 +714,7 @@
                             <h3 className="text-xs font-bold text-muted uppercase tracking-wider px-1">Requirements</h3>
                             <span className="text-[10px] text-neon font-bold">Apply Now</span>
                         </div>
-                        
+
                         <div className="glass-panel p-4 rounded-xl flex items-center justify-between">
                             <div className="flex items-center gap-3">
                                 <div className="w-8 h-8 rounded-full bg-neon/10 flex items-center justify-center border border-neon/30">
@@ -630,7 +727,7 @@
                             </div>
                             <span className="text-xs font-bold text-white">Completed</span>
                         </div>
-                        
+
                         <div className="glass-panel p-4 rounded-xl flex items-center justify-between">
                             <div className="flex items-center gap-3">
                                 <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center border border-white/10">
@@ -672,7 +769,7 @@
                         {/* Tabs */}
                         <div className="flex gap-2 mb-2">
                             {['Overview', 'Content', 'Audience'].map(t => (
-                                <button 
+                                <button
                                     key={t}
                                     onClick={() => setTab(t.toLowerCase())}
                                     className={`flex-1 py-2 text-[11px] font-bold rounded-lg transition-colors ${tab === t.toLowerCase() ? 'bg-white text-black' : 'bg-white/5 text-muted'}`}
@@ -710,7 +807,7 @@
                             <div className="h-32 flex items-end justify-between gap-2 px-2">
                                 {[40, 65, 45, 80, 55, 90, 70].map((h, i) => (
                                     <div key={i} className="w-full bg-white/5 rounded-t relative group hover:bg-white/10 transition-colors">
-                                        <div className="absolute bottom-0 w-full bg-gradient-to-t from-neon/30 to-neon rounded-t" style={{height: `${h}%`}}></div>
+                                        <div className="absolute bottom-0 w-full bg-gradient-to-t from-neon/30 to-neon rounded-t" style={{ height: `${h}%` }}></div>
                                     </div>
                                 ))}
                             </div>
@@ -754,24 +851,24 @@
             const handleImgError = (e, name) => {
                 const parent = e.target.parentNode;
 
-                 // Remove the broken image
-                 e.target.remove();
+                // Remove the broken image
+                e.target.remove();
 
-                 // Create text fallback (brand initials)
-                 parent.textContent = name
-                 .split(' ')
-                   .map(word => word[0])
-                 .join('')
-                 .slice(0, 2)
-                 .toUpperCase();
+                // Create text fallback (brand initials)
+                parent.textContent = name
+                    .split(' ')
+                    .map(word => word[0])
+                    .join('')
+                    .slice(0, 2)
+                    .toUpperCase();
 
-                 parent.style.display = 'flex';
-                 parent.style.alignItems = 'center';
-                 parent.style.justifyContent = 'center';
-                 parent.style.color = '#000';
-                 parent.style.fontWeight = '700';
-                 parent.style.fontSize = '11px';
-                 parent.style.background = '#fff';
+                parent.style.display = 'flex';
+                parent.style.alignItems = 'center';
+                parent.style.justifyContent = 'center';
+                parent.style.color = '#000';
+                parent.style.fontWeight = '700';
+                parent.style.fontSize = '11px';
+                parent.style.background = '#fff';
             };
 
             return (
@@ -785,12 +882,12 @@
                             {brands.map((item, i) => {
                                 const logoUrl = BRAND_LOGOS[item.seenBy] || "https://cdn.simpleicons.org/adirexx";
                                 return (
-                                    <div key={i} className="glass-panel p-4 rounded-xl flex items-center justify-between group active:scale-[0.99] transition-transform animate-slide-in" style={{animationDelay: `${i * 50}ms`}}>
+                                    <div key={i} className="glass-panel p-4 rounded-xl flex items-center justify-between group active:scale-[0.99] transition-transform animate-slide-in" style={{ animationDelay: `${i * 50}ms` }}>
                                         <div className="flex items-center gap-4">
                                             <div className="brand-logo-container">
-                                                <img 
+                                                <img
                                                     src={BRAND_LOGOS[item.seenBy]}
-                                                    alt={item.seenBy} 
+                                                    alt={item.seenBy}
                                                     className="brand-logo-img"
                                                     onError={(e) => handleImgError(e, item.seenBy)}
                                                 />
@@ -803,7 +900,7 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        
+
                                         <div className="flex flex-col items-end gap-2">
                                             <div className="text-[10px] text-muted font-medium bg-white/5 px-2 py-1 rounded border border-white/5">
                                                 View
@@ -835,19 +932,19 @@
                         <p className="text-xs text-muted mt-2">Account status: Secure</p>
                     </div>
                     <div className="space-y-2">
-                         <div className="glass-panel p-4 rounded-xl flex justify-between items-center">
+                        <div className="glass-panel p-4 rounded-xl flex justify-between items-center">
                             <span className="text-sm text-white font-medium">Password Manager</span>
                             <span className="text-[10px] text-neon">Active</span>
                         </div>
-                         <div className="glass-panel p-4 rounded-xl flex justify-between items-center">
+                        <div className="glass-panel p-4 rounded-xl flex justify-between items-center">
                             <span className="text-sm text-white font-medium">Login Activity</span>
                             <span className="text-[10px] text-muted">2 Devices</span>
                         </div>
-                         <div className="glass-panel p-4 rounded-xl flex justify-between items-center">
+                        <div className="glass-panel p-4 rounded-xl flex justify-between items-center">
                             <span className="text-sm text-white font-medium">Data Export</span>
                             <span className="text-[10px] text-neon">Request</span>
                         </div>
-                         <div className="glass-panel p-4 rounded-xl flex justify-between items-center">
+                        <div className="glass-panel p-4 rounded-xl flex justify-between items-center">
                             <span className="text-sm text-white font-medium">2FA</span>
                             <span className="text-[10px] text-neon">Enabled</span>
                         </div>
@@ -891,7 +988,7 @@
         );
 
         // --- MAIN APP ---
-        const DashboardCard = ({ icon, title, value, subtext, onClick, color = "text-white", delay="0s" }) => (
+        const DashboardCard = ({ icon, title, value, subtext, onClick, color = "text-white", delay = "0s" }) => (
             <div onClick={onClick} className="glass-panel rounded-2xl p-5 relative overflow-hidden active:scale-[0.98] transition-all cursor-pointer group animate-slide-in" style={{ animationDelay: delay }}>
                 <div className="flex justify-between items-start mb-3">
                     <div className="flex items-center gap-3">
@@ -919,13 +1016,13 @@
             // HOMEPAGE STYLE SCROLL LOGIC
             const handleScroll = (e) => {
                 const currentY = e.target.scrollTop;
-                
+
                 // 1. Hide immediately on scroll
                 setNavVisible(false);
-                
+
                 // 2. Clear previous timer
                 if (scrollTimer.current) clearTimeout(scrollTimer.current);
-                
+
                 // 3. Show after stop (debounce)
                 scrollTimer.current = setTimeout(() => {
                     setNavVisible(true);
@@ -936,7 +1033,7 @@
 
             const renderContent = () => {
                 if (activeTab !== 'myspace') return <div className="h-full flex flex-col items-center justify-center text-neon font-heading tracking-widest text-sm opacity-50">NAVIGATING...</div>;
-                
+
                 // Pass handleScroll to all views so they trigger the nav logic
                 if (view === 'earnings') return <EarningsView onBack={() => setView('dashboard')} onScroll={handleScroll} />;
                 if (view === 'rqs') return <RQSView onBack={() => setView('dashboard')} onScroll={handleScroll} />;
@@ -963,15 +1060,15 @@
                         </div>
 
                         <ViewWrapper onScroll={handleScroll}>
-                            
-                            <DashboardCard 
-                                icon="Wallet" 
-                                title="Revenue" 
-                                value={`₹${DATA_STORE.earnings.total.toLocaleString()}`} 
-                                subtext="Last 30 days: +₹3,400" 
-                                color="text-neon" 
-                                onClick={() => setView('earnings')} 
-                                delay="0ms" 
+
+                            <DashboardCard
+                                icon="Wallet"
+                                title="Revenue"
+                                value={`₹${DATA_STORE.earnings.total.toLocaleString()}`}
+                                subtext="Last 30 days: +₹3,400"
+                                color="text-neon"
+                                onClick={() => setView('earnings')}
+                                delay="0ms"
                             />
 
                             <div onClick={() => setView('rqs')} className="glass-panel rounded-2xl p-5 relative overflow-hidden active:scale-[0.98] transition-all cursor-pointer group animate-slide-in" style={{ animationDelay: '100ms' }}>
@@ -1006,14 +1103,14 @@
                                 <p className="text-[10px] text-muted mt-3">Active Progression</p>
                             </div>
 
-                            <DashboardCard 
-                                icon="Chart" 
-                                title="Insights" 
-                                value="45.2K Views" 
-                                subtext="Engagement up 12%" 
-                                color="text-white" 
-                                onClick={() => setView('analytics')} 
-                                delay="300ms" 
+                            <DashboardCard
+                                icon="Chart"
+                                title="Insights"
+                                value="45.2K Views"
+                                subtext="Engagement up 12%"
+                                color="text-white"
+                                onClick={() => setView('analytics')}
+                                delay="300ms"
                             />
 
                             <div className="mt-6 animate-slide-in" style={{ animationDelay: '350ms' }}>
@@ -1072,7 +1169,7 @@
             return (
                 <div className="flex-1 flex flex-col relative h-full">
                     <div className="flex-1 overflow-hidden relative">
-                         {renderContent()}
+                        {renderContent()}
                     </div>
                     {/* NAV BAR with Slide Transition */}
                     <div className={`absolute bottom-0 w-full transition-transform duration-300 ${navVisible ? 'translate-y-0' : 'translate-y-full'}`}>
@@ -1085,10 +1182,6 @@
         const root = createRoot(document.getElementById('root'));
         root.render(<App />);
     </script>
-    <!-- Vercel Speed Insights -->
-    <script>
-        window.si = window.si || function () { (window.siq = window.siq || []).push(arguments); };
-    </script>
-    <script defer src="/_vercel/speed-insights/script.js"></script>
 </body>
+
 </html>
