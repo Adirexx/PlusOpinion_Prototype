@@ -1,9 +1,33 @@
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+// Supabase client will be initialized from the UMD bundle loaded via script tag
+// This avoids the ESM import issue with node:module dependencies
 
-const SUPABASE_URL = "https://sldlhompkdzjtthxvlag.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNsZGxob21wa2R6anR0aHh2bGFnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkwOTQ2NTIsImV4cCI6MjA4NDY3MDY1Mn0.8ndMqJNkGRQFwiDI8xjrqP3hVdNuloXkDh-0KgEjhxE";
+const SUPABASE_URL = "https://ogqyemyrxogpnwitumsr.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9ncXllbXlyeG9ncG53aXR1bXNyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk0NTA4MDAsImV4cCI6MjA4NTAyNjgwMH0.cyWTrBkbKdrgrm31k5EgefdTBOsEeBaHjsD4NgGVjCM";
 
-export const supabase = createClient(
-  SUPABASE_URL,
-  SUPABASE_ANON_KEY
-);
+// Wait for Supabase UMD to load, then create client
+function initializeSupabase() {
+  if (!window.supabase) {
+    console.error('Supabase UMD library not loaded');
+    return null;
+  }
+
+  const supabase = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY,
+    {
+      auth: {
+        persistSession: true,        // Enable session persistence across browser restarts
+        autoRefreshToken: true,      // Automatically refresh tokens before expiry
+        detectSessionInUrl: true,    // Handle OAuth callbacks and magic links
+        storage: window.localStorage // Use localStorage (survives browser close, unlike sessionStorage)
+      }
+    }
+  );
+
+  // Expose to browser window for global access
+  window.supabase = supabase;
+  return supabase;
+}
+
+// Initialize when script loads
+export const supabase = initializeSupabase();
