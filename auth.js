@@ -92,8 +92,14 @@ export async function getCurrentUser() {
    PASSWORD RESET (Magic Link)
 ============================ */
 export async function resetPassword(email) {
+  // Use production URL in production, localhost in development
+  // This ensures password reset links always redirect to the correct environment
+  const redirectUrl = window.location.hostname === 'localhost'
+    ? 'http://localhost:3000/reset-password.html'
+    : 'https://plusopinion.com/reset-password.html';
+
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: window.location.origin + "/reset-password.html"
+    redirectTo: redirectUrl
   });
 
   if (error) throw error;
