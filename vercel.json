@@ -1,5 +1,6 @@
 {
     "buildCommand": "node build-version.js",
+    "outputDirectory": ".",
     "headers": [
         {
             "source": "/service-worker.js",
