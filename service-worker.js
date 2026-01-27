@@ -24,6 +24,7 @@ const FILES_TO_CACHE = [
   "./auth.js",
   "./supabase.js",
   "./global.css",
+  "./bg-video.mp4",
   "./manifest.json",
   "./icon-192.png",
   "./icon-512.png"
