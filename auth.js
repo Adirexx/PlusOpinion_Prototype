@@ -185,3 +185,10 @@ window.getUserProfile = getUserProfile;
 window.updateUserProfile = updateUserProfile;
 window.uploadAvatar = uploadAvatar;
 window.checkUsernameAvailable = checkUsernameAvailable;
+
+// Mark auth module as ready (prevents timeout errors on mobile)
+window.authReady = true;
+if (window._resolveAuthReady) {
+  window._resolveAuthReady();
+}
+console.log('✅ Auth module loaded successfully - all functions exposed globally');
