@@ -38,6 +38,10 @@
     <link rel="icon" href="./icon-192.png">
     <link rel="icon" href="./icon-512.png">
 
+    <!-- Preload critical scripts for faster mobile loading -->
+    <link rel="modulepreload" href="./supabase.js">
+    <link rel="modulepreload" href="./auth.js">
+
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-D42E61TP4M"></script>
     <script>
@@ -46,6 +50,37 @@
         gtag('js', new Date());
 
         gtag('config', 'G-D42E61TP4M');
+    </script>
+
+    <!-- Service Worker Registration & Auto-Update Detection -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('./service-worker.js').then(function (registration) {
+                console.log('✅ Service Worker registered');
+
+                // Check for updates every 5 minutes
+                setInterval(function () {
+                    registration.update();
+                }, 300000);
+
+                // Listen for new service worker (new version available)
+                registration.addEventListener('updatefound', function () {
+                    var newWorker = registration.installing;
+
+                    newWorker.addEventListener('statechange', function () {
+                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                            // New version available - prompt user
+                            if (confirm('🎉 A new version of PlusOpinion is available! Reload to update?')) {
+                                newWorker.postMessage({ action: 'skipWaiting' });
+                                window.location.reload();
+                            }
+                        }
+                    });
+                });
+            }).catch(function (error) {
+                console.error('❌ Service Worker registration failed:', error);
+            });
+        }
     </script>
 
 
@@ -70,13 +105,13 @@
         });
         window._resolveAuthReady = authResolve;
 
-        // Timeout after 5 seconds if module doesn't load
+        // Timeout after 15 seconds if module doesn't load (increased for mobile 3G/4G networks)
         setTimeout(function () {
             if (!window.authReady) {
-                console.error('❌ Auth module failed to load within 5 seconds');
+                console.error('❌ Auth module failed to load within 15 seconds');
                 authReject(new Error('Auth module took too long to load. Please check your internet connection and refresh.'));
             }
-        }, 5000);
+        }, 15000); // Increased from 5s to 15s for mobile compatibility
 
         console.log('🔄 Auth promise created, waiting for module to load...');
     </script>
@@ -84,7 +119,9 @@
     <!-- Supabase Client & Auth Functions -->
     <script type="module">
         try {
-            const { createClient } = await import("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm");
+            // Use the Supabase UMD global that's already loaded via script tag
+            // The ESM import from jsDelivr was failing with bundling errors on mobile
+            const { createClient } = window.supabase;
 
             const SUPABASE_URL = "https://ogqyemyrxogpnwitumsr.supabase.co";
             const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9ncXllbXlyeG9ncG53aXR1bXNyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk0NTA4MDAsImV4cCI6MjA4NTAyNjgwMH0.cyWTrBkbKdrgrm31k5EgefdTBOsEeBaHjsD4NgGVjCM";
