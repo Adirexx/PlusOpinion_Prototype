@@ -1,30 +1,27 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" class="dark">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>PlusOpinion - Owner Profile</title>
 
-    <!-- Favicon for browser tabs -->
-    <link rel="icon" type="image/png" sizes="32x32" href="/icon-192.png">
-    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="/icon-192.png">
-
-    <link rel="manifest" href="./manifest.json">
-    <meta name="theme-color" content="#020205"> 
-    <link rel="icon" href="./icon-192.png">
-    <link rel="icon" href="./icon-512.png">
-
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap"
+        rel="stylesheet">
 
     <!-- Global Design System -->
     <link rel="stylesheet" href="./global.css">
 
     <link rel="manifest" href="./manifest.json">
     <meta name="theme-color" content="#020205">
+
+    <!-- Supabase UMD bundle (must load before supabase.js) -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script type="module" src="./supabase.js"></script>
 
     <!-- Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -40,7 +37,7 @@
             --font-body: 'Inter', system-ui, -apple-system, sans-serif;
             --font-heading: 'Space Grotesk', system-ui, serif;
 
-            --bg-deep: #020205; 
+            --bg-deep: #020205;
             --neon: #2f8bff;
             --neon-weak: rgba(47, 139, 255, 0.18);
             --muted: rgba(255, 255, 255, 0.65);
@@ -48,11 +45,12 @@
             --glass-border: rgba(255, 255, 255, 0.08);
             --accent-green: #6BFFB6;
             --accent-gold: #FFD700;
-            
+
             --radius: 16px;
         }
 
-        html, body {
+        html,
+        body {
             height: 100%;
             margin: 0;
             overflow: hidden;
@@ -60,7 +58,7 @@
             color: white;
             font-family: var(--font-body);
         }
-        
+
         body {
             display: flex;
             justify-content: center;
@@ -70,40 +68,65 @@
         /* --- AMBIENT BACKGROUND --- */
         .ambient-bg {
             position: fixed;
-            top: 0; left: 0; width: 100vw; height: 100vh;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
             background: radial-gradient(circle at 50% 0%, #050814 0%, var(--bg-deep) 90%);
             z-index: -2;
             pointer-events: none;
-            transform: translateZ(0); 
+            transform: translateZ(0);
         }
-        
+
         .orb {
             position: absolute;
             border-radius: 50%;
             filter: blur(100px);
             z-index: -1;
-            opacity: 0.4; 
+            opacity: 0.4;
             animation: breathe 8s infinite ease-in-out alternate;
         }
-        .orb-1 { top: -10%; left: -20%; width: 70vw; height: 70vw; background: radial-gradient(circle, var(--neon), transparent); }
-        .orb-2 { bottom: -10%; right: -20%; width: 80vw; height: 80vw; background: radial-gradient(circle, #4f46e5, transparent); animation-delay: -5s; }
+
+        .orb-1 {
+            top: -10%;
+            left: -20%;
+            width: 70vw;
+            height: 70vw;
+            background: radial-gradient(circle, var(--neon), transparent);
+        }
+
+        .orb-2 {
+            bottom: -10%;
+            right: -20%;
+            width: 80vw;
+            height: 80vw;
+            background: radial-gradient(circle, #4f46e5, transparent);
+            animation-delay: -5s;
+        }
 
         @keyframes breathe {
-            0% { transform: scale(1); opacity: 0.3; }
-            100% { transform: scale(1.1); opacity: 0.5; }
+            0% {
+                transform: scale(1);
+                opacity: 0.3;
+            }
+
+            100% {
+                transform: scale(1.1);
+                opacity: 0.5;
+            }
         }
 
         /* --- APP CONTAINER --- */
         #root {
             width: 100%;
             height: 100%;
-            max-width: 450px; 
-            background-color: rgba(3, 4, 18, 0.85); 
-            backdrop-filter: blur(20px); 
+            max-width: 450px;
+            background-color: rgba(3, 4, 18, 0.85);
+            backdrop-filter: blur(20px);
             position: relative;
             display: flex;
             flex-direction: column;
-            box-shadow: 0 0 80px rgba(0,0,0,0.8);
+            box-shadow: 0 0 80px rgba(0, 0, 0, 0.8);
             overflow: hidden;
         }
 
@@ -114,8 +137,10 @@
             overscroll-behavior-y: contain;
         }
 
-        .font-heading { font-family: var(--font-heading); }
-        
+        .font-heading {
+            font-family: var(--font-heading);
+        }
+
         .glass-panel {
             background: var(--card);
             backdrop-filter: blur(12px);
@@ -123,7 +148,7 @@
             border: 1px solid var(--glass-border);
             transition: all 0.2s ease;
         }
-        
+
         .header-glass {
             background: rgba(3, 4, 18, 0.95);
             backdrop-filter: blur(20px);
@@ -134,27 +159,30 @@
             background: linear-gradient(90deg, var(--neon), #6fb6ff);
             box-shadow: 0 0 12px var(--neon-weak);
         }
-        
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        
+
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
         /* Profile Specifics */
         .profile-avatar-container {
             width: 105px;
             height: 105px;
             border-radius: 50%;
-            border: 2px solid rgba(255,255,255,0.1); 
+            border: 2px solid rgba(255, 255, 255, 0.1);
             overflow: hidden;
             position: relative;
             z-index: 10;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
             background-color: #000;
         }
-        
+
         .banner-gradient {
             background: linear-gradient(135deg, #1a1f35 0%, #0d101b 100%);
             position: relative;
             overflow: hidden;
         }
+
         .banner-gradient::after {
             content: '';
             position: absolute;
@@ -165,32 +193,67 @@
         }
 
         /* OPINION BUTTON ANIMATION (RESTORED) */
-        .opinion-btn { 
-            transition: all 0.3s ease; 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3); 
+        .opinion-btn {
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
         }
-        .opinion-icon { transition: transform 0.5s ease; }
-        .opinion-btn:active .opinion-icon, .opinion-btn:hover .opinion-icon { transform: rotate(90deg); }
-        .opinion-btn:active, .opinion-btn:hover { transform: scale(1.05); box-shadow: 0 0 25px rgba(47, 139, 255, 0.8); }
+
+        .opinion-icon {
+            transition: transform 0.5s ease;
+        }
+
+        .opinion-btn:active .opinion-icon,
+        .opinion-btn:hover .opinion-icon {
+            transform: rotate(90deg);
+        }
+
+        .opinion-btn:active,
+        .opinion-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 25px rgba(47, 139, 255, 0.8);
+        }
 
         /* Animations */
         @keyframes slideInUp {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
-        .animate-enter { animation: slideInUp 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
-        
+
+        .animate-enter {
+            animation: slideInUp 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+        }
+
         .animate-pop {
             animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
+
         @keyframes pop {
-            0% { transform: scale(1); }
-            40% { transform: scale(1.4); }
-            100% { transform: scale(1); }
+            0% {
+                transform: scale(1);
+            }
+
+            40% {
+                transform: scale(1.4);
+            }
+
+            100% {
+                transform: scale(1);
+            }
         }
 
-        .touch-scale:active { transform: scale(0.96); opacity: 0.8; transition: all 0.1s; }
-        
+        .touch-scale:active {
+            transform: scale(0.96);
+            opacity: 0.8;
+            transition: all 0.1s;
+        }
+
         /* Tooltips */
         .delayed-label {
             opacity: 0;
@@ -200,27 +263,41 @@
             pointer-events: none;
             z-index: 100;
         }
-        .group:active .delayed-label, 
+
+        .group:active .delayed-label,
         .group:hover .delayed-label {
             opacity: 1;
             transform: translateY(0);
             transition-delay: 1s;
         }
-        
+
         /* MySpace Swoosh */
         .myspace-swoosh {
             opacity: 0.7;
             transform: translateX(-5px) translateY(5px);
             transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
+
         .myspace-trigger:hover .myspace-swoosh {
-            opacity: 1; transform: translateX(0) translateY(0); stroke: var(--neon);
+            opacity: 1;
+            transform: translateX(0) translateY(0);
+            stroke: var(--neon);
         }
-        
+
         /* Image Magnify for Post */
-        .img-magnify-wrapper { overflow: hidden; }
-        .img-magnify { transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94); will-change: transform; }
-        .group:hover .img-magnify, .group:active .img-magnify { transform: scale(1.08); }
+        .img-magnify-wrapper {
+            overflow: hidden;
+        }
+
+        .img-magnify {
+            transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            will-change: transform;
+        }
+
+        .group:hover .img-magnify,
+        .group:active .img-magnify {
+            transform: scale(1.08);
+        }
 
         .nav-glass {
             background: rgba(3, 4, 18, 0.95);
@@ -229,9 +306,25 @@
         }
 
         /* Hide Scrollbar but allow scroll */
-        .hide-scroll::-webkit-scrollbar { display: none; }
-        .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+        .hide-scroll::-webkit-scrollbar {
+            display: none;
+        }
+
+        .hide-scroll {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
     </style>
+
+    <script>
+        import { supabase } from "./supabase.js";
+
+        supabase.auth.onAuthStateChange((event, session) => {
+            if (!session) {
+                window.location.href = "index.html";
+            }
+        });
+    </script>
 
     <script>
         tailwind.config = {
@@ -252,12 +345,13 @@
         }
     </script>
 </head>
+
 <body>
     <div class="ambient-bg">
         <div class="orb orb-1"></div>
         <div class="orb orb-2"></div>
     </div>
-    
+
     <div id="root"></div>
 
     <script type="text/babel">
@@ -270,13 +364,13 @@
         };
 
         function dispatchAction(action) {
-          if (window.PlusOpinionActions && window.PlusOpinionActions[action]) {
-            // Already on homepage
-            window.PlusOpinionActions[action]();
-          } else {
-            // On another page → redirect with hash
-            window.location.href = `HOMEPAGE_FINAL.HTML#${action.replace('open', '').toLowerCase()}`;
-          }
+            if (window.PlusOpinionActions && window.PlusOpinionActions[action]) {
+                // Already on homepage
+                window.PlusOpinionActions[action]();
+            } else {
+                // On another page → redirect with hash
+                window.location.href = `HOMEPAGE_FINAL.HTML#${action.replace('open', '').toLowerCase()}`;
+            }
         }
 
         const triggerAction = (action) => {
@@ -287,48 +381,48 @@
             }
         };
 
-         // 🔁 PAGE → TAB MAP (GLOBAL)
-         const PAGE_TAB_MAP = { 
-           'HOMEPAGE_FINAL.HTML': 'home',
-           'CATAGORYPAGE.HTML': 'categories',
-           'MY SPACE FINAL (USER).HTML': 'myspace',
-           'NOTIFICATION PANEL.HTML': 'notifs',
-           'PRIVATE OWNER PROFILE.HTML': 'profile'
+        // 🔁 PAGE → TAB MAP (GLOBAL)
+        const PAGE_TAB_MAP = {
+            'HOMEPAGE_FINAL.HTML': 'home',
+            'CATAGORYPAGE.HTML': 'categories',
+            'MY SPACE FINAL (USER).HTML': 'myspace',
+            'NOTIFICATION PANEL.HTML': 'notifs',
+            'PRIVATE OWNER PROFILE.HTML': 'profile'
         };
 
         // --- ICONS ---
         const Icons = {
-            ArrowLeft: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>,
-            Search: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>,
-            MoreVertical: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>,
-            MapPin: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>,
-            Link: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>,
-            Edit: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>,
-            BarChart2: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" x2="18" y1="20" y2="10"/><line x1="12" x2="12" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="14"/></svg>,
-            ShieldCheck: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></svg>,
-            Plus: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>,
-            Zap: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>,
-            Lock: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>,
-            ThumbsUp: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2h0a3.13 3.13 0 0 1 3 3.88Z"/></svg>,
-            Share: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" x2="12" y1="2" y2="15"/></svg>,
-            MessageCircle: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>,
-            AlertTriangle: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/></svg>,
-            Clock: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>,
-            
+            ArrowLeft: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12 19-7-7 7-7" /><path d="M19 12H5" /></svg>,
+            Search: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>,
+            MoreVertical: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1" /><circle cx="12" cy="5" r="1" /><circle cx="12" cy="19" r="1" /></svg>,
+            MapPin: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" /></svg>,
+            Link: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></svg>,
+            Edit: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /><path d="m15 5 4 4" /></svg>,
+            BarChart2: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" x2="18" y1="20" y2="10" /><line x1="12" x2="12" y1="20" y2="4" /><line x1="6" x2="6" y1="20" y2="14" /></svg>,
+            ShieldCheck: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" /><path d="m9 12 2 2 4-4" /></svg>,
+            Plus: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14" /></svg>,
+            Zap: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>,
+            Lock: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>,
+            ThumbsUp: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M7 10v12" /><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2h0a3.13 3.13 0 0 1 3 3.88Z" /></svg>,
+            Share: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" /><polyline points="16 6 12 2 8 6" /><line x1="12" x2="12" y1="2" y2="15" /></svg>,
+            MessageCircle: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" /></svg>,
+            AlertTriangle: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" /><line x1="12" x2="12" y1="9" y2="13" /><line x1="12" x2="12.01" y1="17" y2="17" /></svg>,
+            Clock: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>,
+
             // Edit Icons
-            Camera: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>,
-            X: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 18 12"/></svg>,
-            Settings: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.74v-.47a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>,
+            Camera: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" /><circle cx="12" cy="13" r="3" /></svg>,
+            X: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18" /><path d="m6 6 18 12" /></svg>,
+            Settings: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.74v-.47a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" /><circle cx="12" cy="12" r="3" /></svg>,
 
             // Nav Icons
-            Home: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
-            Grid: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>,
-            Bell: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>,
-            User: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
+            Home: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>,
+            Grid: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect width="7" height="7" x="3" y="3" rx="1" /><rect width="7" height="7" x="14" y="3" rx="1" /><rect width="7" height="7" x="14" y="14" rx="1" /><rect width="7" height="7" x="3" y="14" rx="1" /></svg>,
+            Bell: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" /><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" /></svg>,
+            User: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>,
             MySpaceLogo: (p) => (
                 <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M11 3L3 22" strokeLinejoin="bevel"/>
-                    <path d="M21 22L11 3" strokeLinejoin="bevel"/>
+                    <path d="M11 3L3 22" strokeLinejoin="bevel" />
+                    <path d="M21 22L11 3" strokeLinejoin="bevel" />
                     <path d="M22 8L4 18" className="myspace-swoosh" strokeWidth="2.5" />
                 </svg>
             )
@@ -366,8 +460,8 @@
         // --- COMPONENTS ---
 
         const NavItem = ({ icon, label, isActive, onClick, isMySpace }) => (
-            <button 
-                onClick={() => { vibrate(); onClick(); }} 
+            <button
+                onClick={() => { vibrate(); onClick(); }}
                 className="flex-1 flex flex-col items-center justify-center gap-1 group relative active:scale-95 transition-transform h-full"
             >
                 <div className={`relative ${isMySpace ? 'myspace-trigger' : ''} p-1.5 rounded-xl transition-all duration-300 ${isActive ? 'bg-white/5 scale-105' : ''}`}>
@@ -430,19 +524,19 @@
                         <div className="space-y-4">
                             <div className="space-y-1">
                                 <label className="text-[10px] uppercase font-bold text-muted ml-1">Name</label>
-                                <input type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:border-neon focus:outline-none transition-colors" />
+                                <input type="text" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:border-neon focus:outline-none transition-colors" />
                             </div>
-                            
+
                             <div className="space-y-1">
                                 <label className="text-[10px] uppercase font-bold text-muted ml-1">Bio</label>
-                                <textarea value={formData.bio} onChange={e => setFormData({...formData, bio: e.target.value})} rows={3} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:border-neon focus:outline-none transition-colors resize-none" />
+                                <textarea value={formData.bio} onChange={e => setFormData({ ...formData, bio: e.target.value })} rows={3} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:border-neon focus:outline-none transition-colors resize-none" />
                             </div>
 
                             <div className="space-y-1">
                                 <label className="text-[10px] uppercase font-bold text-muted ml-1">Location</label>
                                 <div className="relative">
                                     <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted"><Icon icon="MapPin" size={16} /></div>
-                                    <input type="text" value={formData.location} onChange={e => setFormData({...formData, location: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white text-sm focus:border-neon focus:outline-none transition-colors" />
+                                    <input type="text" value={formData.location} onChange={e => setFormData({ ...formData, location: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white text-sm focus:border-neon focus:outline-none transition-colors" />
                                 </div>
                             </div>
 
@@ -450,7 +544,7 @@
                                 <label className="text-[10px] uppercase font-bold text-muted ml-1">Website</label>
                                 <div className="relative">
                                     <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted"><Icon icon="Link" size={16} /></div>
-                                    <input type="text" value={formData.website} onChange={e => setFormData({...formData, website: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white text-sm focus:border-neon focus:outline-none transition-colors" />
+                                    <input type="text" value={formData.website} onChange={e => setFormData({ ...formData, website: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white text-sm focus:border-neon focus:outline-none transition-colors" />
                                 </div>
                             </div>
                         </div>
@@ -471,8 +565,8 @@
             };
 
             return (
-                <div 
-                    className="glass-panel rounded-2xl p-4 mb-4 relative transition-all duration-300 animate-enter" 
+                <div
+                    className="glass-panel rounded-2xl p-4 mb-4 relative transition-all duration-300 animate-enter"
                 >
                     <div className="flex justify-between items-start mb-2">
                         <div className="flex gap-3 w-full">
@@ -480,7 +574,7 @@
                                 <img src={post.avatar} alt="Profile" loading="lazy" className="w-10 h-10 rounded-full border border-white/10 shrink-0 object-cover" />
                                 <span className="delayed-label absolute top-12 left-0 bg-black/80 border border-white/10 text-[10px] text-white px-2 py-1 rounded whitespace-nowrap shadow-lg">Open Profile</span>
                             </div>
-                            
+
                             <div className="flex-1 min-w-0 pr-8">
                                 <div className="flex items-center gap-2">
                                     <div className="group relative">
@@ -528,8 +622,8 @@
 
                     <div className="flex items-end justify-between pt-3 mt-1 relative">
                         <div className="flex items-center gap-6">
-                            <button 
-                                className={`flex items-center gap-1.5 touch-scale transition-colors group relative ${isLiked ? 'text-neon' : 'text-muted hover:text-neon'}`} 
+                            <button
+                                className={`flex items-center gap-1.5 touch-scale transition-colors group relative ${isLiked ? 'text-neon' : 'text-muted hover:text-neon'}`}
                                 onClick={handleLike}
                             >
                                 <div className={isLiked ? "animate-pop" : ""}>
@@ -548,7 +642,7 @@
                                 <span className="delayed-label absolute bottom-8 left-1/2 -translate-x-1/2 bg-black/80 border border-white/10 text-[10px] text-white px-2 py-1 rounded shadow-lg">Share</span>
                             </button>
                         </div>
-                        
+
                         <div className="flex items-center gap-3">
                             {post.seenBy && (
                                 <span className="group relative text-[9px] text-neon/80 font-medium tracking-wide bg-neon/5 px-2 py-0.5 rounded border border-neon/10 cursor-default flex items-center gap-2">
@@ -594,8 +688,8 @@
             const [menuOpen, setMenuOpen] = useState(false);
             const [contentTab, setContentTab] = useState('opinions');
             const [activeTab, setActiveTab] = useState(() => {
-            const page = window.location.pathname.split('/').pop();
-              return PAGE_TAB_MAP[page] || 'profile';
+                const page = window.location.pathname.split('/').pop();
+                return PAGE_TAB_MAP[page] || 'profile';
             });
             const [navVisible, setNavVisible] = useState(true);
             const [fabVisible, setFabVisible] = useState(true);
@@ -603,18 +697,18 @@
             const touchStartX = useRef(0);
             const touchStartY = useRef(0);
             const [drafts, setDrafts] = useState(() => {
-              return window.PlusOpinion?.state?.drafts || [];
+                return window.PlusOpinion?.state?.drafts || [];
             });
 
             useEffect(() => {
-              const handler = () => {
-                setDrafts([...window.PlusOpinion.state.drafts]);
-              };
+                const handler = () => {
+                    setDrafts([...window.PlusOpinion.state.drafts]);
+                };
 
-              window.addEventListener('plusopinion:draftSaved', handler);
-              return () => window.removeEventListener('plusopinion:draftSaved', handler);
+                window.addEventListener('plusopinion:draftSaved', handler);
+                return () => window.removeEventListener('plusopinion:draftSaved', handler);
             }, []);
-            
+
             // TABS CONFIG
             const TABS = ['opinions', 'comments', 'seen', 'drafts'];
 
@@ -646,10 +740,10 @@
             const handleTouchEnd = (e) => {
                 const touchEndX = e.changedTouches[0].clientX;
                 const touchEndY = e.changedTouches[0].clientY;
-                
+
                 const diffX = touchStartX.current - touchEndX;
                 const diffY = touchStartY.current - touchEndY;
-                
+
                 // Only trigger horizontal swipe if horizontal movement is significant AND vertical movement is small
                 // This prevents swiping while scrolling down
                 if (Math.abs(diffX) > 50 && Math.abs(diffX) > Math.abs(diffY)) {
@@ -689,14 +783,15 @@
                                 className="p-2 text-white/80 hover:text-white"
                                 onClick={() => {
                                     vibrate();
-                                    triggerAction('openLens');                                }}
+                                    triggerAction('openLens');
+                                }}
                             >
                                 <Icon icon="Search" size={20} />
                             </button>
 
                             {/* Menu Button */}
-                            <button 
-                                className="p-2 text-white/80 hover:text-white relative" 
+                            <button
+                                className="p-2 text-white/80 hover:text-white relative"
                                 onClick={() => { vibrate(); setMenuOpen(!menuOpen); }}
                             >
                                 <Icon icon="MoreVertical" size={20} />
@@ -720,23 +815,23 @@
                     </div>
 
                     {/* SCROLLABLE CONTENT AREA */}
-                    <div 
-                        className="flex-1 overflow-y-auto smooth-scroll-container pb-24" 
+                    <div
+                        className="flex-1 overflow-y-auto smooth-scroll-container pb-24"
                         onScroll={handleScroll}
                         onTouchStart={handleTouchStart}
                         onTouchEnd={handleTouchEnd}
                     >
-                        
+
                         {/* PROFILE HEADER */}
                         <div className="relative mb-6">
                             <div className="h-[140px] w-full banner-gradient"></div>
-                            
+
                             <div className="absolute bottom-1.5 left-4 flex items-end">
                                 <div className="profile-avatar-container bg-[#020205]">
                                     <img src={USER.avatar} alt="Profile" className="w-full h-full object-cover" />
                                 </div>
                             </div>
-                            
+
                             {/* OWNER EDIT BUTTON */}
                             <div className="absolute bottom-3 right-4 flex gap-2">
                                 <button onClick={() => { vibrate(); setView('edit'); }} className="bg-black/40 backdrop-blur-md border border-white/10 text-white text-xs font-bold px-4 py-2 rounded-xl hover:bg-white/10 active:scale-95 transition-all">
@@ -753,7 +848,7 @@
                                 <span className="flex items-center gap-1"><Icon icon="MapPin" size={12} /> {USER.location}</span>
                             </div>
                             <p className="text-sm text-gray-300 font-light leading-relaxed mb-4">{USER.bio}</p>
-                            
+
                             <div className="flex items-center gap-1.5 text-xs text-neon font-medium mb-5">
                                 <Icon icon="Link" size={14} />
                                 <a href="#" className="hover:underline">{USER.website}</a>
@@ -788,7 +883,7 @@
 
                                 {/* Insight Tool - Standalone Square */}
                                 <button onClick={() => triggerMySpace('insights')} className="w-[72px] bg-[#0D1117] border border-white/10 rounded-xl flex flex-col items-center justify-center gap-1 active:scale-[0.95] transition-all group hover:border-white/20 relative overflow-hidden">
-                                     <div className="absolute inset-0 bg-neon/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                    <div className="absolute inset-0 bg-neon/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                                     <Icon icon="BarChart2" size={20} className="text-white group-hover:text-neon transition-colors relative z-10" />
                                     <span className="text-[8px] font-bold text-muted uppercase tracking-wider relative z-10">Insights</span>
                                 </button>
@@ -841,13 +936,13 @@
                                         <p className="text-xs text-neon/80">These are private drafts visible only to you.</p>
                                     </div>
                                     {drafts.length === 0 ? (
-                                      <div className="text-center text-xs text-muted/40 py-10">
-                                        No drafts yet
-                                      </div>
+                                        <div className="text-center text-xs text-muted/40 py-10">
+                                            No drafts yet
+                                        </div>
                                     ) : (
-                                      drafts.map(draft => (
-                                       <DraftCard key={draft.id} draft={draft} />
-                                      ))
+                                        drafts.map(draft => (
+                                            <DraftCard key={draft.id} draft={draft} />
+                                        ))
                                     )}
                                 </div>
                             )}
@@ -863,10 +958,11 @@
                     </div>
 
                     {/* FAB (RESTORED ANIMATION) */}
-                    <button 
-                    onClick={() => {
-                        vibrate();
-                        triggerAction('openOpinion');                    }}
+                    <button
+                        onClick={() => {
+                            vibrate();
+                            triggerAction('openOpinion');
+                        }}
                         className={`absolute bottom-24 right-5 bg-neon text-white h-12 pl-4 pr-5 rounded-full flex items-center gap-2 z-30 transition-all duration-500 opinion-btn ${fabVisible ? 'translate-y-0 opacity-100' : 'translate-y-20 opacity-0'}`}
                     >
                         <div className="opinion-icon"><Icon icon="Plus" size={20} className="stroke-[3px]" /></div>
@@ -884,10 +980,6 @@
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
     </script>
-    <!-- Vercel Speed Insights -->
-    <script>
-        window.si = window.si || function () { (window.siq = window.siq || []).push(arguments); };
-    </script>
-    <script defer src="/_vercel/speed-insights/script.js"></script>
 </body>
+
 </html>
