@@ -367,7 +367,7 @@
         // 🔗 GLOBAL NAVIGATION FUNCTION (PASTE HERE)
         const goTo = (page) => {
             window.scrollTo(0, 0);
-            window.location.href = page;
+            window.navigateTo(page);
         };
 
         const vibrate = (ms) => {
@@ -380,7 +380,7 @@
                 window.PlusOpinionActions[action]();
             } else {
                 // On another page → redirect with hash
-                window.location.href = `HOMEPAGE_FINAL.HTML#${action.replace('open', '').toLowerCase()}`;
+                window.navigateTo(`HOMEPAGE_FINAL.HTML#${action.replace('open', '').toLowerCase()}`);
             }
         }
 
@@ -388,7 +388,7 @@
             if (window.PlusOpinionActions?.[action]) {
                 window.PlusOpinionActions[action]();
             } else {
-                window.location.href = `HOMEPAGE_FINAL.HTML#${action.replace('open', '').toLowerCase()}`;
+                window.navigateTo(`HOMEPAGE_FINAL.HTML#${action.replace('open', '').toLowerCase()}`);
             }
         };
 
@@ -1537,12 +1537,12 @@
                                 <img
                                     src={post.avatar || DEFAULT_AVATAR}
                                     className="w-8 h-8 rounded-full object-cover cursor-pointer active:scale-95 transition-transform"
-                                    onClick={() => { window.location.href = `PUBLIC-POV-PROFILE.HTML?id=${post.user_id || 'me'}`; }}
+                                    onClick={() => { window.navigateTo(`PUBLIC-POV-PROFILE.HTML?id=${post.user_id || 'me'}`); }}
                                 />
                                 <div>
                                     <div
                                         className="text-white text-sm font-bold cursor-pointer hover:text-neon transition-colors"
-                                        onClick={() => { window.location.href = `PUBLIC-POV-PROFILE.HTML?id=${post.user_id || 'me'}`; }}
+                                        onClick={() => { window.navigateTo(`PUBLIC-POV-PROFILE.HTML?id=${post.user_id || 'me'}`); }}
                                     >
                                         {post.name}
                                     </div>
