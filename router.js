@@ -212,18 +212,18 @@ class RouteCleaner {
             '/HOMEPAGE_FINAL.HTML': '/feed',
             '/BOOKMARKS.HTML': '/bookmarks',
             '/CATAGORYPAGE.HTML': '/categories',
-            '/MY%20SPACE%20FINAL%20(USER).HTML': '/myspace',
-            '/MY%20SPACE%20FINAL(COMPANIES).HTML': '/workspace',
-            '/NOTIFICATION%20PANEL.HTML': '/notifications',
-            '/PRIVATE%20OWNER%20PROFILE.HTML': '/myprofile',
-            '/PUBLIC%20POV%20PROFILE.HTML': '/profile',
+            '/MY-SPACE-USER.HTML': '/myspace',
+            '/MY-SPACE-COMPANIES.HTML': '/workspace',
+            '/NOTIFICATION-PANEL.HTML': '/notifications',
+            '/PRIVATE-OWNER-PROFILE.HTML': '/myprofile',
+            '/PUBLIC-POV-PROFILE.HTML': '/profile',
             '/onboarding.html': '/onboarding',
             '/reset-password.html': '/reset-password',
             '/change-password.html': '/change-password',
             '/ABOUT.HTML': '/about',
             '/SUPPORT.HTML': '/support',
             '/PRIVACY_POLICY.HTML': '/privacy-policy',
-            '/TERMS_AND_CONDITIONS.HTML': '/T&C'
+            '/TERMS_AND_CONDITIONS.HTML': '/terms-and-conditions'
         };
 
         // Create reverse mapping for lookup
