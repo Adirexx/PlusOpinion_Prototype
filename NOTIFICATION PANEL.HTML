@@ -19,17 +19,32 @@
     <link rel="manifest" href="./manifest.json">
     <meta name="theme-color" content="#020205">
 
+    <!-- Favicon for browser tabs -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/icon-192.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/icon-192.png">
+
     <!-- Supabase UMD bundle (must load before supabase.js) -->
     <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-    <script type="module" src="./supabase.js"></script>
+    <script type="module" src="./supabase.js?v=2.0"></script>
+    <script type="module" src="./auth.js?v=2.0"></script>
 
     <!-- Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="./runtime.js"></script>
-    <script src="./bridge.js"></script>
+    <script src="./runtime.js?v=2.0"></script>
+    <script type="module" src="./api.js?v=3.0"></script>
+    <script type="module" src="./notifications.js?v=2.0"></script>
+
+    <!-- SPA Core Infrastructure -->
+    <script type="module" src="./state_manager.js"></script>
+    <script type="module" src="./router.js"></script>
+    <script type="module" src="./pull_to_refresh.js"></script>
+    <script type="module" src="./navigation_preloader.js"></script>
+
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script>if ("serviceWorker" in navigator) { window.addEventListener("load", () => { navigator.serviceWorker.register("./service-worker.js"); }); }</script>
     <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
 
     <!-- Visual Tokens & Global CSS -->
@@ -178,6 +193,39 @@
             letter-spacing: 0.5px;
         }
 
+        /* Highlighting Animation */
+        @keyframes flash-highlight {
+            0% {
+                background-color: transparent !important;
+            }
+
+            10% {
+                background-color: rgba(47, 139, 255, 0.45) !important;
+            }
+
+            100% {
+                background-color: transparent !important;
+            }
+        }
+
+        .highlight-flash {
+            animation: flash-highlight 2.5s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+            position: relative;
+            z-index: 20;
+        }
+
+        .highlight-flash::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border: 3px solid var(--neon) !important;
+            box-shadow: 0 0 20px rgba(47, 139, 255, 0.4);
+            opacity: 0.8;
+            pointer-events: none;
+            border-radius: inherit;
+            z-index: 25;
+        }
+
         /* Settings/Filter Modal */
         .modal-overlay {
             position: fixed;
@@ -200,7 +248,7 @@
         }
     </style>
 
-    <script>
+    <script type="module">
         import { supabase } from "./supabase.js";
 
         supabase.auth.onAuthStateChange((event, session) => {
@@ -237,6 +285,9 @@
     <div id="root"></div>
 
     <script type="text/babel">
+        // Default Avatar (SVG Data URI - Rounded Shoulder, Thinner Stroke 1.2px, Scaled Down)
+        // Default Avatar (Refined: Navbar Style Match - Reduced Gap cy=9, Slim 0.8px, Extracted Blue #326bcb)
+        const DEFAULT_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none'%3E%3Crect width='24' height='24' fill='%23090e1a'/%3E%3Cpath d='M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2' stroke='%23326bcb' stroke-width='0.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='12' cy='9' r='4' stroke='%23326bcb' stroke-width='0.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E";
         const { useState, useEffect, useMemo, useRef } = React;
         const { motion, AnimatePresence, useMotionValue, useTransform } = window.Motion;
 
@@ -244,6 +295,30 @@
         const goTo = (page) => {
             window.scrollTo(0, 0);
             window.location.href = page;
+        };
+
+        const checkMySpaceRedirect = async () => {
+            try {
+                const user = await window.getCurrentUser();
+
+                if (!user) {
+                    window.location.href = 'MY SPACE FINAL (USER).HTML';
+                    return;
+                }
+                const { data: profile } = await window.supabase
+                    .from('profiles')
+                    .select('is_business_account, company_name')
+                    .eq('id', user.id)
+                    .single();
+
+                if (profile && profile.is_business_account) {
+                    window.location.href = 'MY SPACE FINAL(COMPANIES).HTML';
+                } else {
+                    window.location.href = 'MY SPACE FINAL (USER).HTML';
+                }
+            } catch (e) {
+                window.location.href = 'MY SPACE FINAL (USER).HTML';
+            }
         };
 
         function dispatchAction(action) {
@@ -278,6 +353,7 @@
             Bell: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" /><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" /></svg>,
             Trash: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /></svg>,
             Bookmark: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m19 21-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" /></svg>,
+            BookmarkFilled: (p) => <svg {...p} viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m19 21-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" /></svg>,
             Wallet: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4" /><path d="M3 5v14a2 2 0 0 0 2 2h16v-5" /><path d="M18 12a2 2 0 0 0 0 4h4v-4Z" /></svg>,
             Eye: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" /><circle cx="12" cy="12" r="3" /></svg>,
             Zap: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>,
@@ -286,6 +362,7 @@
             Home: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>,
             Grid: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect width="7" height="7" x="3" y="3" rx="1" /><rect width="7" height="7" x="14" y="3" rx="1" /><rect width="7" height="7" x="14" y="14" rx="1" /><rect width="7" height="7" x="3" y="14" rx="1" /></svg>,
             Shield: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" /><path d="M12 8v4" /><path d="M12 16h.01" /></svg>,
+            ShieldCheck: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" /><path d="m9 12 2 2 4-4" /></svg>,
             Undo: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7v6h6" /><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13" /></svg>,
             Filter: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" /></svg>,
             MySpaceLogo: (p) => (
@@ -296,8 +373,12 @@
                 </svg>
             ),
             Check: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>,
+            CheckCircle: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>,
+            Clock: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>,
+            AlertTriangle: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" /><path d="M12 9v4" /><path d="M12 17h.01" /></svg>,
             ToggleLeft: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="12" x="2" y="6" rx="6" ry="6" /><circle cx="8" cy="12" r="2" /></svg>,
-            ToggleRight: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="12" x="2" y="6" rx="6" ry="6" /><circle cx="16" cy="12" r="2" /></svg>
+            ToggleRight: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="12" x="2" y="6" rx="6" ry="6" /><circle cx="16" cy="12" r="2" /></svg>,
+            X: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>,
         };
 
         const Icon = ({ icon, size = 20, className = "" }) => {
@@ -321,21 +402,46 @@
             "Tesla": "https://cdn.simpleicons.org/tesla"
         };
 
-        // --- DATA ---
-        const INITIAL_DATA = [
-            { id: "n1", type: "revenue", title: "Wallet Credited", desc: "You earned ₹12.00 for your verified review on OnePlus Nord 3.", time: "2m ago", unread: true, icon: "Wallet", tag: "+ ₹12.00" },
-            { id: "n2", type: "brand_seen", title: "Samsung viewed your post", desc: "Your review on 'Samsung S24 Ultra' caught the brand's attention.", time: "1h ago", unread: true, icon: "Eye", brand: "Samsung" },
-            { id: "n7", type: "social", title: "GamerX_99 replied", desc: "Replied to your comment on 'LG Ultragear 27': \"Totally agree about the HDR...\"", time: "3h ago", unread: true, icon: "User", avatar: "https://i.pravatar.cc/150?u=12" },
-            { id: "n3", type: "system", title: "RQS Level Up", desc: "Your Reputation Quality Score increased to 84. You are now Level 1 eligible.", time: "5h ago", unread: false, icon: "Zap", tag: "Level 1" },
-            { id: "n8", type: "brand_seen", title: "Ola Electric insight", desc: "Your feedback on 'Ola S1 Pro Gen 2' was marked as 'Helpful' by the brand team.", time: "6h ago", unread: false, icon: "Eye", brand: "Ola Electric" },
-            { id: "n4", type: "security", title: "Security Alert", desc: "New login detected from Mumbai, IN (Chrome/Win). Was this you?", time: "1d ago", unread: false, icon: "Shield", critical: true },
-            { id: "n5", type: "social", title: "Priya Sharma agreed", desc: "Priya and 12 others found your review on 'Nothing Phone (2)' helpful.", time: "2d ago", unread: false, icon: "User", avatar: "https://i.pravatar.cc/150?u=1" },
-            { id: "n9", type: "system", title: "Coupon Unlocked", desc: "You've unlocked a 'Nykaa ₹100 OFF' coupon based on your recent activity.", time: "2d ago", unread: false, icon: "Zap", tag: "Reward" },
-            { id: "n6", type: "revenue", title: "Affiliate Commission", desc: "₹150 pending from your OnePlus referral link click.", time: "3d ago", unread: false, icon: "Wallet", tag: "+ ₹150" },
-            { id: "n10", type: "brand_seen", title: "Nike team viewed", desc: "Your detailed breakdown of 'Nike Dunk Low Panda' is trending in Fashion.", time: "3d ago", unread: false, icon: "Eye", brand: "Nike" },
-            { id: "n11", type: "social", title: "TechJunkie mentioned you", desc: "Mentioned you in 'Best ANC Headphones of 2025' discussion.", time: "4d ago", unread: false, icon: "User", avatar: "https://i.pravatar.cc/150?u=22" },
-            { id: "n12", type: "brand_seen", title: "Dyson support replied", desc: "Official reply to your question about V15 filters.", time: "5d ago", unread: false, icon: "Eye", brand: "Dyson" }
-        ];
+        // Format time ago for notifications
+        function formatTimeAgo(timestamp) {
+            const now = new Date();
+            const past = new Date(timestamp);
+            const diffMs = now - past;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMs / 3600000);
+            const diffDays = Math.floor(diffMs / 86400000);
+
+            if (diffMins < 1) return 'Just now';
+            if (diffMins < 60) return `${diffMins}m ago`;
+            if (diffHours < 24) return `${diffHours}h ago`;
+            if (diffDays < 7) return `${diffDays}d ago`;
+            return past.toLocaleDateString();
+        }
+
+        function formatNotification(dbNotif) {
+            const metadata = dbNotif.metadata || {};
+
+            return {
+                id: dbNotif.id,
+                type: dbNotif.type || 'system',
+                category: dbNotif.category || 'system',
+                title: dbNotif.title,
+                desc: dbNotif.message,
+                time: formatTimeAgo(dbNotif.created_at),
+                unread: !dbNotif.is_read,
+                icon: dbNotif.icon || 'Bell',
+                avatar: metadata.actor_avatar,
+                actor_id: dbNotif.related_user_id,
+                related_post_id: dbNotif.related_post_id,
+                metadata: metadata,
+                brand: metadata.brand_name,
+                tag: metadata.tag,
+                critical: dbNotif.priority === 'critical',
+                action_url: dbNotif.action_url,
+                _dbId: dbNotif.id,
+                is_bookmarked: metadata.is_bookmarked === true
+            };
+        }
 
         // --- COMPONENTS ---
 
@@ -360,150 +466,509 @@
             );
         };
 
-        const NotificationItem = ({ data, onSwipe, onClick }) => {
+        // NotificationItem - Matching Prototype Design
+        const NotificationItem = ({ data, onSwipe, onClick, highlightId }) => {
             const x = useMotionValue(0);
 
-            // Text styling
-            const titleClass = data.unread ? 'font-bold text-white' : 'font-medium text-slate-300';
-            const descClass = data.unread ? 'text-slate-200' : 'text-slate-500';
-
             // --- ANIMATION VALUES ---
-
-            // Background Color: Reddish for left swipe (delete), Blueish for right swipe (bookmark)
-            // Range: -100 (Left) <-> 0 (Center) <-> 100 (Right)
             const bg = useTransform(
                 x,
                 [-100, -50, 0, 50, 100],
                 ["rgba(62, 22, 22, 1)", "rgba(62, 22, 22, 0.5)", "rgba(2, 2, 5, 0)", "rgba(14, 24, 51, 0.5)", "rgba(14, 24, 51, 1)"]
             );
 
-            // DELETE ICON (Right Side - Appears on Swipe Left/Negative X)
-            // It should come from the right (positive offset relative to its position) towards center
             const deleteOpacity = useTransform(x, [-60, -20], [1, 0]);
             const deleteScale = useTransform(x, [-100, -50], [1.2, 0.8]);
-            const deleteX = useTransform(x, [-100, 0], [0, 40]); // Moves from right to left as we drag left
+            const deleteX = useTransform(x, [-100, 0], [0, 40]);
 
-            // BOOKMARK ICON (Left Side - Appears on Swipe Right/Positive X)
-            // It should come from the left (negative offset relative to its position) towards center
             const bookmarkOpacity = useTransform(x, [20, 60], [0, 1]);
             const bookmarkScale = useTransform(x, [50, 100], [0.8, 1.2]);
-            const bookmarkX = useTransform(x, [0, 100], [-40, 0]); // Moves from left to right as we drag right
+            const bookmarkX = useTransform(x, [0, 100], [-40, 0]);
 
             const handleDragEnd = (_, info) => {
                 if (info.offset.x < -100) onSwipe(data.id, 'delete');
-                else if (info.offset.x > 100) onSwipe(data.id, 'bookmark');
+                else if (info.offset.x > 100) {
+                    onSwipe(data.id, 'bookmark');
+                    x.set(0); // Reset position for bookmark toggle
+                } else {
+                    x.set(0);
+                }
+            };
+
+            // Handle click on avatar/icon - navigate to relevant page
+            const handleIconClick = (e) => {
+                e.stopPropagation();
+                const getPath = (p) => window.RouteCleaner ? window.RouteCleaner.getCleanPath(p) : p;
+                if (data.actor_id) {
+                    window.location.href = `${getPath('PUBLIC POV PROFILE.HTML')}?id=${data.actor_id}`;
+                } else if (data.metadata?.company_id) {
+                    window.location.href = `${getPath('COMPANY PROFILE.HTML')}?id=${data.metadata.company_id}`;
+                } else if (data.category === 'revenue') {
+                    window.location.href = `${getPath('MY SPACE FINAL (USER).HTML')}#revenue`;
+                } else if (data.category === 'security') {
+                    window.location.href = `${getPath('PRIVATE OWNER PROFILE.HTML')}#security`;
+                } else if (data.type === 'rqs_updated') {
+                    window.location.href = `${getPath('MY SPACE FINAL (USER).HTML')}#rqs`;
+                }
+            };
+
+            // Determine if this is a user interaction notification
+            const isUserInteraction = () => {
+                const type = (data.type || '').toLowerCase();
+                const category = (data.category || '').toLowerCase();
+                if (data.actor_id || data.metadata?.actor_avatar) return true;
+                const types = ['post_liked', 'post_agreed', 'post_commented', 'comment_replied', 'comment_liked', 'mention', 'follow', 'post_bookmarked', 'comment', 'reply', 'agree', 'like', 'saved'];
+                return types.includes(type) || category === 'interaction' || category === 'social';
+            };
+
+            // Helpers for context extraction
+            const getActorName = () => data.metadata?.actor_name || 'Someone';
+            const getProductContext = () => data.metadata?.product_name || data.metadata?.item_name || '';
+            const getCommentPreview = () => data.metadata?.comment_preview || '';
+            const getPostPreview = () => data.metadata?.post_preview || '';
+
+
+
+            // Build title and message based on notification type
+            const getNotificationContent = () => {
+                const metadata = data.metadata || {};
+                const actorName = getActorName();
+                const productName = getProductContext();
+                const postPreview = getPostPreview();
+                const commentPreview = getCommentPreview();
+
+                const type = (data.type || '').toLowerCase();
+                const category = (data.category || '').toLowerCase();
+
+                // 1. REVENUE
+                if (category === 'revenue' || type === 'revenue_credit') {
+                    return {
+                        title: 'Wallet Credited',
+                        message: `You earned ₹${metadata.amount || '0'} for your review on '${productName}'.`,
+                        tag: `+ ₹${metadata.amount || '0'}`
+                    };
+                }
+
+                // 2. SYSTEM: RQS
+                if (type === 'rqs_updated' || data.title?.includes('RQS')) {
+                    return {
+                        title: 'RQS Level Up',
+                        message: `Your score increased to ${metadata.new_score || '0'}. You are now Level ${metadata.level || '1'}.`,
+                        tag: `Level ${metadata.level || '1'}`
+                    };
+                }
+
+                // 3. USER INTERACTIONS
+                if (isUserInteraction()) {
+                    if (type === 'post_commented' || type === 'comment_replied' || type === 'comment' || type === 'reply') {
+                        const isReply = type === 'comment_replied' || type === 'reply';
+                        const title = actorName ? `${actorName} ${isReply ? 'replied' : 'commented'}` : (isReply ? 'New Reply' : 'New Comment');
+
+                        // Extract full comment text from metadata
+                        const fullComment = metadata.comment_preview || metadata.comment_text || commentPreview;
+
+                        // Build category/product context - use post category, not notification category
+                        const category = metadata.category;
+                        const product = productName;
+                        let contextLine = '';
+                        if (category && product) {
+                            contextLine = `${category} / ${product}`;
+                        } else if (product) {
+                            contextLine = product;
+                        } else if (category) {
+                            contextLine = category;
+                        }
+
+                        // If no comment text or context, show the original message as fallback
+                        const fallbackMessage = (!fullComment && !contextLine)
+                            ? (data.message || (isReply ? 'replied to your comment' : 'commented on your post'))
+                            : '';
+
+                        return {
+                            title,
+                            message: fallbackMessage,
+                            commentText: fullComment,
+                            postContext: contextLine,
+                            categoryBadge: category
+                        };
+                    }
+
+                    if (type === 'post_liked' || type === 'post_agreed' || type === 'agree' || type === 'like') {
+                        const title = actorName ? `${actorName} agreed` : 'New Agreement';
+                        const category = metadata.category;
+                        const product = productName;
+                        let contextLine = '';
+                        if (category && product) {
+                            contextLine = `${category} / ${product}`;
+                        } else if (product) {
+                            contextLine = product;
+                        }
+
+                        // Fallback message if no context available
+                        const fallbackMessage = !contextLine
+                            ? (data.message || 'found your review helpful')
+                            : '';
+
+                        return {
+                            title,
+                            message: fallbackMessage,
+                            postContext: contextLine,
+                            categoryBadge: category
+                        };
+                    }
+
+                    if (type === 'comment_liked' || type === 'like_comment') {
+                        const title = actorName ? `${actorName} liked` : 'New Like';
+                        const message = productName ? `Liked your comment on '${productName}'` : 'Liked your comment';
+                        return { title, message };
+                    }
+
+                    if (type === 'post_bookmarked' || type === 'saved') {
+                        const title = actorName ? `${actorName} saved` : 'Post Saved';
+                        const message = productName ? `Saved your review on '${productName}'` : 'Saved your opinion';
+                        return { title, message };
+                    }
+
+                    if (type === 'mention' || data.title?.includes('mention')) {
+                        const title = actorName ? `${actorName} mentioned you` : 'New Mention';
+                        const message = productName
+                            ? `Mentioned you in '${productName}' discussion.`
+                            : postPreview ? `Mentioned you: "${postPreview}"` : 'Mentioned you in a discussion.';
+                        return { title, message };
+                    }
+                }
+
+                // 4. MONETIZATION / WITHDRAWALS
+                if (category === 'monetization' || type.includes('withdrawal')) {
+                    const amount = metadata.amount || '0';
+                    const isRejected = type.includes('declined') || type.includes('rejected');
+                    const isPaid = type.includes('paid');
+
+                    return {
+                        title: data.title || (isRejected ? 'Withdrawal Declined' : isPaid ? 'Withdrawal Paid' : 'Withdrawal Requested'),
+                        message: data.message || (isRejected ? `Requested for ₹${amount} was declined.` : `₹${amount} has been processed.`),
+                        tag: isRejected ? 'Declined' : isPaid ? `+ ₹${amount}` : 'Pending'
+                    };
+                }
+
+                // 5. BRAND NOTIFICATIONS
+                if (category === 'brand' || type === 'brand_view' || type.includes('brand')) {
+                    const brandName = metadata.brand_name || 'Brand';
+                    return {
+                        title: `${brandName} viewed your post`,
+                        message: productName ? `Your review on '${productName}' caught the brand's attention.` : `Your content caught the brand's attention.`
+                    };
+                }
+
+                // 5. SECURITY
+                if (category === 'security' || type.includes('login')) {
+                    const location = metadata.location || 'Unknown';
+                    return {
+                        title: 'Security Alert',
+                        message: `New login detected from ${location}. Was this you?`
+                    };
+                }
+
+                // Default
+                return { title: data.title || 'Notification', message: data.message || data.desc || '' };
+            };
+
+            const { title, message, tag: contentTag, commentText, postContext, categoryBadge } = getNotificationContent();
+            const displayTag = contentTag || data.tag;
+
+            // Render icon/avatar based on notification type
+            const renderIcon = () => {
+                // User interaction - show circular avatar
+                if (isUserInteraction()) {
+                    const avatarUrl = data.metadata?.actor_avatar || data.avatar || DEFAULT_AVATAR;
+                    return (
+                        <div className="w-12 h-12 rounded-full overflow-hidden cursor-pointer" onClick={handleIconClick}>
+                            <img
+                                src={avatarUrl}
+                                alt="User"
+                                className="w-full h-full object-cover hover:opacity-80 transition-opacity"
+                                onError={(e) => e.target.src = DEFAULT_AVATAR}
+                            />
+                        </div>
+                    );
+                }
+
+                // System: RQS - Zap icon in rounded rectangle
+                if (data.type === 'rqs_updated' || data.title?.includes('RQS')) {
+                    return (
+                        <div
+                            className="w-12 h-12 bg-[#0d1117] rounded-2xl flex items-center justify-center cursor-pointer hover:bg-[#161b22] transition-colors border border-white/5"
+                            onClick={handleIconClick}
+                        >
+                            <Icon icon="Zap" size={22} className="text-white/80" />
+                        </div>
+                    );
+                }
+
+                // Security - Shield icon in rounded rectangle with red tint
+                if (data.category === 'security' || data.type?.includes('login') || data.type?.includes('security')) {
+                    return (
+                        <div
+                            className="w-12 h-12 bg-red-500/10 rounded-2xl flex items-center justify-center cursor-pointer hover:bg-red-500/15 transition-colors border border-red-500/20"
+                            onClick={handleIconClick}
+                        >
+                            <Icon icon="ShieldAlert" size={22} className="text-red-400" />
+                        </div>
+                    );
+                }
+
+                // Revenue - Wallet icon
+                if (data.category === 'revenue') {
+                    return (
+                        <div
+                            className="w-12 h-12 bg-blue-500/10 rounded-2xl flex items-center justify-center cursor-pointer hover:bg-blue-500/15 transition-colors border border-blue-500/20"
+                            onClick={handleIconClick}
+                        >
+                            <Icon icon="Wallet" size={22} className="text-blue-400" />
+                        </div>
+                    );
+                }
+
+                // Monetization - Withdrawal icons
+                if (data.category === 'monetization') {
+                    const isRejected = data.type?.includes('declined') || data.type?.includes('rejected');
+                    const isPaid = data.type?.includes('paid');
+                    const bgColor = isRejected ? 'bg-red-500/10' : isPaid ? 'bg-emerald-500/10' : 'bg-amber-500/10';
+                    const borderColor = isRejected ? 'border-red-500/20' : isPaid ? 'border-emerald-500/20' : 'border-amber-500/20';
+                    const iconColor = isRejected ? 'text-red-400' : isPaid ? 'text-emerald-400' : 'text-amber-400';
+
+                    return (
+                        <div
+                            className={`w-12 h-12 ${bgColor} rounded-2xl flex items-center justify-center cursor-pointer border ${borderColor}`}
+                            onClick={handleIconClick}
+                        >
+                            <Icon icon={data.icon} size={22} className={iconColor} />
+                        </div>
+                    );
+                }
+
+                // Brand notifications
+                if (data.category === 'brand' && data.metadata?.brand_name) {
+                    return (
+                        <div
+                            className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center cursor-pointer hover:bg-white/10 transition-colors border border-white/5"
+                            onClick={handleIconClick}
+                        >
+                            <img src={BRAND_LOGOS[data.metadata.brand_name] || 'https://via.placeholder.com/40'} alt={data.metadata.brand_name} className="w-6 h-6 object-contain" />
+                        </div>
+                    );
+                }
+
+                // Default - Bell icon
+                return (
+                    <div className="w-12 h-12 bg-[#0d1117] rounded-2xl flex items-center justify-center border border-white/5">
+                        <Icon icon={data.icon || 'Bell'} size={22} className="text-white/60" />
+                    </div>
+                );
             };
 
             return (
                 <div className="relative mb-0 overflow-hidden group">
-
-                    {/* SWIPE ACTIONS LAYER - Dynamic Background & Icons */}
                     <motion.div
                         style={{ backgroundColor: bg }}
                         className="absolute inset-0 z-0 flex items-center justify-between px-6 pointer-events-none"
                     >
-                        {/* Bookmark Icon (Left side) */}
-                        <motion.div
-                            style={{ opacity: bookmarkOpacity, x: bookmarkX, scale: bookmarkScale }}
-                            className="text-neon flex items-center gap-2"
-                        >
-                            <Icon icon="Bookmark" size={24} />
+                        <motion.div style={{ opacity: bookmarkOpacity, x: bookmarkX, scale: bookmarkScale }} className="text-neon flex items-center gap-2">
+                            <Icon icon={data.is_bookmarked ? "BookmarkFilled" : "Bookmark"} size={24} />
                         </motion.div>
-
-                        {/* Delete Icon (Right side) */}
-                        <motion.div
-                            style={{ opacity: deleteOpacity, x: deleteX, scale: deleteScale }}
-                            className="text-danger flex items-center gap-2"
-                        >
+                        <motion.div style={{ opacity: deleteOpacity, x: deleteX, scale: deleteScale }} className="text-danger flex items-center gap-2">
                             <Icon icon="Trash" size={24} />
                         </motion.div>
                     </motion.div>
 
-                    {/* FOREGROUND CARD */}
+                    {/* FOREGROUND CARD - Matching Prototype */}
                     <motion.div
+                        id={`notif-${data.id}`}
                         style={{ x }}
                         drag="x"
                         dragConstraints={{ left: 0, right: 0 }}
                         onDragEnd={handleDragEnd}
                         onClick={() => onClick(data.id)}
-                        className={`
-                            relative py-4 px-4 flex items-start gap-4 cursor-pointer transition-colors border-b border-white/[0.05] bg-[#020205] z-10
-                            active:bg-white/[0.02]
-                        `}
+                        className={`relative py-3.5 px-4 flex items-start gap-3 cursor-pointer transition-all border-b border-white/[0.05] z-10 hover:bg-white/[0.02] ${data.unread ? 'bg-white/[0.03]' : 'bg-transparent'} ${highlightId && String(highlightId).toLowerCase() === String(data.id).toLowerCase() ? 'highlight-flash' : ''}`}
                     >
-                        {/* Unread Indicator Dot */}
+                        {/* Unread Indicator Dot with Glow */}
                         {data.unread && (
-                            <div className="absolute left-2 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-neon shadow-[0_0_5px_var(--neon)]"></div>
+                            <div className="absolute left-1.5 top-7 w-1.5 h-1.5 rounded-full bg-neon shadow-[0_0_12px_var(--neon)]"></div>
                         )}
 
-                        {/* Icon/Avatar Container */}
-                        <div className={`
-                            w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ml-4
-                            ${data.type === 'revenue' ? 'bg-blue-500/10 text-blue-400' :
-                                data.critical ? 'bg-red-500/10 text-red-400' :
-                                    'bg-white/5 text-muted'}
-                        `}>
-                            {data.type === 'brand_seen' && data.brand ? (
-                                <img src={BRAND_LOGOS[data.brand]} alt={data.brand} className="w-5 h-5 object-contain opacity-80" />
-                            ) : data.type === 'social' && data.avatar ? (
-                                <img src={data.avatar} alt="User" className="w-full h-full object-cover rounded-xl opacity-90" />
-                            ) : (
-                                <Icon icon={data.icon} size={18} />
-                            )}
+                        {/* Avatar/Icon - 48px */}
+                        <div className="shrink-0">
+                            {renderIcon()}
                         </div>
 
+                        {/* Content */}
                         <div className="flex-1 min-w-0 pt-0.5">
-                            <div className="flex justify-between items-baseline mb-1">
-                                <h4 className={`text-sm tracking-tight leading-snug ${titleClass}`}>
-                                    {data.title}
-                                </h4>
-                                <span className="text-[10px] text-slate-500 whitespace-nowrap ml-2 font-medium">{data.time}</span>
-                            </div>
-                            <p className={`text-xs leading-relaxed line-clamp-2 ${descClass}`}>
-                                {data.desc}
-                            </p>
-
-                            {data.tag && (
-                                <div className="mt-2">
-                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded border border-white/10 bg-white/5 text-white/90 inline-block">
-                                        {data.tag}
-                                    </span>
+                            {/* Header: Title + Time */}
+                            <div className="flex justify-between items-start mb-1">
+                                <div className="flex items-center gap-2">
+                                    {isUserInteraction() && data.actor_id ? (
+                                        <h4
+                                            className={`text-[14px] leading-tight cursor-pointer hover:text-neon transition-colors ${data.unread ? 'text-white font-bold' : 'text-slate-300 font-semibold'}`}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                window.location.href = `PUBLIC POV PROFILE.HTML?id=${data.actor_id}`;
+                                            }}
+                                        >
+                                            {title}
+                                        </h4>
+                                    ) : (
+                                        <h4 className={`text-[14px] leading-tight ${data.unread ? 'text-white font-bold' : 'text-slate-300 font-semibold'}`}>
+                                            {title}
+                                        </h4>
+                                    )}
+                                    {data.is_bookmarked && (
+                                        <div className="flex items-center justify-center">
+                                            <Icon icon="BookmarkFilled" size={16} className="text-neon fill-neon" />
+                                        </div>
+                                    )}
                                 </div>
-                            )}
+                                <span className="text-xs text-slate-500 whitespace-nowrap ml-3 mt-0.5">{data.time}</span>
+                            </div>
+
+                            <div className="flex gap-3 justify-between items-start">
+                                <div className="flex-1 min-w-0">
+                                    {/* Description - Only show if not empty */}
+                                    {message && (
+                                        <p className={`text-[13px] leading-relaxed tracking-tight ${data.unread ? 'text-slate-300 font-medium' : 'text-slate-500 font-normal'}`}>
+                                            {message}
+                                        </p>
+                                    )}
+
+                                    {/* Comment Text - Quoted and prominent */}
+                                    {commentText && (
+                                        <div className="mt-1">
+                                            <p className="text-[13px] text-slate-300 leading-snug break-words">
+                                                "{commentText}"
+                                            </p>
+                                        </div>
+                                    )}
+
+                                    {/* Post Context - PREVIEW TEXT */}
+                                    {data.metadata?.post_preview && (
+                                        <div className="mt-1.5 pl-2 border-l-2 border-white/10">
+                                            <p className="text-[12px] text-slate-500 italic line-clamp-2">
+                                                {data.metadata.post_preview}
+                                            </p>
+                                        </div>
+                                    )}
+
+                                    {/* Footer Context - Category/Product */}
+                                    {postContext && (
+                                        <div className="mt-1 text-[11px] text-slate-600">
+                                            on {postContext}
+                                        </div>
+                                    )}
+
+                                    {/* Badge/Tag */}
+                                    {displayTag && (
+                                        <div className="mt-2">
+                                            <span className={`text-[11px] font-bold px-3 py-1.5 rounded-lg inline-block transition-all shadow-sm ${data.category === 'revenue' ? 'bg-white/10 text-white border border-white/20' :
+                                                data.type === 'rqs_updated' ? 'bg-white/10 text-white border border-white/20' :
+                                                    'bg-white/5 text-white/70 border border-white/10'
+                                                }`}>
+                                                {displayTag}
+                                            </span>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* THUMBNAIL PREVIEW - Square Top Right */}
+                                {data.metadata?.post_media && (
+                                    <div className="shrink-0 w-12 h-12 rounded-lg overflow-hidden border border-white/10 bg-black/20 ml-1 mt-0">
+                                        {data.metadata.post_media_type === 'video' ? (
+                                            <video
+                                                src={data.metadata.post_media}
+                                                className="w-full h-full object-cover opacity-90"
+                                                muted
+                                                playsInline
+                                            />
+                                        ) : (
+                                            <img
+                                                src={`${data.metadata.post_media}?width=150&quality=70&resize=cover`}
+                                                className="w-full h-full object-cover opacity-90"
+                                                alt="Post"
+                                                onError={(e) => {
+                                                    // Fallback if transformation fails
+                                                    e.target.src = data.metadata.post_media;
+                                                }}
+                                            />
+                                        )}
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </motion.div>
                 </div>
             );
         };
 
-        const BottomNav = ({ hasUnread, activeTab }) => (
-            <div className="nav-glass absolute bottom-0 w-full h-[65px] px-2 pb-2 flex justify-between items-center z-40 transition-transform duration-300">
-                <NavItem icon="Home" label="Home" onClick={() => goTo('HOMEPAGE_FINAL.HTML')} />
-                <NavItem icon="Grid" label="Categories" onClick={() => goTo('CATAGORYPAGE.HTML')} />
-                <NavItem icon="MySpaceLogo" label="My Space" isMySpace={true} onClick={() => goTo('MY SPACE FINAL (USER).HTML')} />
-                <NavItem icon="Bell" label="Notifications" isActive={activeTab === 'notifs'} hasUnread={hasUnread} />
-                <NavItem icon="User" label="Profile" onClick={() => goTo('PRIVATE OWNER PROFILE.HTML')} />
-            </div>
-        );
+        const BottomNav = ({ activeTab, explicitCount, isVisible = true }) => {
+            const [internalCount, setInternalCount] = useState(0);
 
-        const NavItem = ({ icon, label, isActive, isMySpace, hasUnread, onClick }) => (
+            // Use explicit count if provided (synced with parent), otherwise use internal subscription
+            const unreadCount = (typeof explicitCount !== 'undefined') ? explicitCount : internalCount;
+
+            useEffect(() => {
+                // If explicit count is passed, we rely on parent. Otherwise subscribe.
+                if (typeof explicitCount === 'undefined') {
+                    const unsubscribe = window.subscribeToUnreadCount && window.subscribeToUnreadCount(setInternalCount);
+                    return () => unsubscribe && unsubscribe();
+                }
+            }, [explicitCount]);
+
+            return (
+                <div className={`nav-glass fixed bottom-0 left-0 w-full h-[65px] px-2 pb-2 flex justify-between items-center z-40 transition-transform duration-500 ease-out ${isVisible ? 'translate-y-0' : 'translate-y-full'}`}>
+                    <NavItem icon="Home" label="Home" isActive={activeTab === 'home'} onClick={() => goTo('HOMEPAGE_FINAL.HTML')} />
+                    <NavItem icon="Grid" label="Categories" isActive={activeTab === 'categories'} onClick={() => goTo('CATAGORYPAGE.HTML')} />
+                    <NavItem icon="MySpaceLogo" label="My Space" isActive={activeTab === 'myspace'} onClick={() => { }} isMySpace={true} />
+                    <NavItem
+                        icon="Bell"
+                        label="Notifications"
+                        isActive={activeTab === 'notifs'}
+                        badge={unreadCount}
+                        onClick={() => {
+                            // Already on page, maybe scroll top or refresh?
+                        }}
+                    />
+                    <NavItem icon="User" label="Profile" isActive={activeTab === 'profile'} onClick={() => goTo('PRIVATE OWNER PROFILE.HTML')} />
+                </div>
+            );
+        };
+
+        const NavItem = ({ icon, label, isActive, onClick, isMySpace, badge }) => (
             <button
-                onClick={() => {
-                    vibrate(5);
-                    if (onClick) onClick();
+                onClick={(e) => {
+                    e.stopPropagation();
+                    if (typeof vibrate === 'function') vibrate(5);
+                    if (isMySpace) {
+                        checkMySpaceRedirect();
+                    } else {
+                        onClick();
+                    }
                 }}
-                className="flex-1 flex flex-col items-center justify-center gap-1 group relative touch-scale transition-transform h-full"
+                className={`relative group flex flex-col items-center justify-center w-14 h-14 ${isActive ? '' : ''}`}
             >
-                <div className={`relative p-1.5 rounded-xl transition-all duration-300 ${isActive ? 'bg-white/5 scale-105' : ''}`}>
-                    <Icon icon={icon} size={24} className={`transition-all duration-300 ${isActive ? 'text-white stroke-[2px]' : 'text-muted group-hover:text-white stroke-[1.5px]'}`} />
+                <div className={`relative ${isMySpace ? 'myspace-trigger' : ''} p-1.5 rounded-xl ${isActive ? 'bg-white/5' : ''}`}>
+                    <Icon icon={icon} size={24} className={`${isActive ? 'text-white glow-white stroke-[2.5px]' : 'text-muted group-hover:text-white stroke-[1.5px]'}`} />
 
-                    {hasUnread && !isActive && (
-                        <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-neon shadow-[0_0_8px_var(--neon)] animate-pulse"></span>
+                    {/* Badge Logic */}
+                    {badge > 0 && (
+                        <div className="absolute -top-1 -right-1 flex items-center justify-center min-w-[18px] h-[18px] bg-blue-500 rounded-full border-2 border-[#020205] z-50 animate-pulse-subtle">
+                            <span className="absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75 animate-ping"></span>
+                            <span className="relative text-[10px] font-bold text-white px-1 leading-none">
+                                {badge > 99 ? '99+' : badge}
+                            </span>
+                        </div>
                     )}
+
                 </div>
             </button>
         );
-
         // --- FILTER MODAL ---
         const FilterModal = ({ isOpen, onClose, activeFilter, onSelect }) => {
             if (!isOpen) return null;
@@ -578,11 +1043,28 @@
         // --- MAIN APP ---
         const App = () => {
             const [filter, setFilter] = useState('All');
-            const [notifications, setNotifications] = useState(INITIAL_DATA);
-            const [hasUnread, setHasUnread] = useState(true);
+            const [notifications, setNotifications] = useState([]);
+            const [hasUnread, setHasUnread] = useState(false);
             const [activeTab, setActiveTab] = useState('notifs');
             const [isFilterOpen, setIsFilterOpen] = useState(false);
             const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+            const [currentUser, setCurrentUser] = useState(null);
+            const [loading, setLoading] = useState(true);
+            const [highlightId, setHighlightId] = useState(null);
+            const [navVisible, setNavVisible] = useState(true);
+            const lastY = useRef(0);
+
+            const handleScroll = (e) => {
+                const currentY = e.target.scrollTop;
+                const isScrollingDown = currentY > lastY.current;
+
+                if (isScrollingDown && currentY > 50) {
+                    setNavVisible(false);
+                } else {
+                    setNavVisible(true);
+                }
+                lastY.current = currentY;
+            };
 
             const [settings, setSettings] = useState({
                 showCount: true,
@@ -590,47 +1072,337 @@
                 email: false
             });
 
+            // Load current user
+            useEffect(() => {
+                async function loadUser() {
+                    const user = await window.getCurrentUser();
+                    setCurrentUser(user);
+                }
+                loadUser();
+            }, []);
+
+            // Load notifications from database
+            useEffect(() => {
+                if (!currentUser) return;
+
+                async function loadNotifications() {
+                    try {
+                        const cacheKey = `notifications_${currentUser.id}`;
+
+                        // CACHE-FIRST: Try to load from cache first
+                        if (window.StateManager) {
+                            const cachedData = await window.StateManager.get(cacheKey);
+                            if (cachedData) {
+                                console.log('📦 Loading notifications from cache');
+                                setNotifications(cachedData);
+                                setHasUnread(cachedData.some(n => n.unread));
+                                setLoading(false);
+                                // Continue to fetch fresh data in background
+                            }
+                        }
+
+                        // ⚡ OPTIMIZED LOADING - Fetch notifications, then profiles in parallel
+                        const data = await window.getNotifications({ limit: 50 });
+                        const formatted = data.map(formatNotification);
+
+                        // Get unique user IDs that need avatar fetching
+                        const notificationsWithMissingAvatars = formatted.filter(
+                            n => n.actor_id && !n.metadata?.actor_avatar
+                        );
+
+                        // Fetch profiles in parallel if needed
+                        let profileMap = {};
+                        if (notificationsWithMissingAvatars.length > 0) {
+                            const userIds = [...new Set(notificationsWithMissingAvatars.map(n => n.actor_id))];
+
+                            const { data: profiles } = await window.supabase
+                                .from('profiles')
+                                .select('id, full_name, username, avatar_url')
+                                .in('id', userIds);
+
+                            if (profiles) {
+                                profiles.forEach(p => {
+                                    profileMap[p.id] = p;
+                                });
+                            }
+
+                            // Enrich notifications with avatar and name data
+                            formatted.forEach(n => {
+                                if (n.actor_id && profileMap[n.actor_id]) {
+                                    const profile = profileMap[n.actor_id];
+                                    if (!n.metadata) n.metadata = {};
+                                    if (!n.metadata.actor_avatar && profile.avatar_url) {
+                                        n.metadata.actor_avatar = profile.avatar_url;
+                                    }
+                                    if (!n.metadata.actor_name) {
+                                        n.metadata.actor_name = profile.full_name || profile.username;
+                                    }
+                                    if (!n.avatar && profile.avatar_url) {
+                                        n.avatar = profile.avatar_url;
+                                    }
+                                }
+                            });
+                        }
+
+                        // SAVE TO CACHE (2 minute TTL - notifications change frequently)
+                        if (window.StateManager) {
+                            await window.StateManager.set(cacheKey, formatted, { ttl: 2 * 60 * 1000 });
+                            console.log('💾 Saved notifications to cache');
+                        }
+
+                        setNotifications(formatted);
+                        setHasUnread(formatted.some(n => n.unread));
+                        setLoading(false);
+                    } catch (err) {
+                        console.error('Error loading notifications:', err);
+                        setLoading(false);
+                    }
+                }
+                loadNotifications();
+            }, [currentUser]);
+
+            // Subscribe to real-time notification updates
+            useEffect(() => {
+                if (!currentUser) return;
+
+                const subscription = window.supabase
+                    .channel('user_notifications')
+                    .on('postgres_changes', {
+                        event: 'INSERT',
+                        schema: 'public',
+                        table: 'notifications',
+                        filter: `user_id=eq.${currentUser.id}`
+                    }, async (payload) => {
+                        let newPayload = { ...payload.new };
+
+                        // If there is a related user (actor), we MUST fetch their profile to show avatar/name
+                        if (newPayload.related_user_id) {
+                            try {
+                                const { data: profile } = await window.supabase
+                                    .from('profiles')
+                                    .select('full_name, username, avatar_url')
+                                    .eq('id', newPayload.related_user_id)
+                                    .single();
+
+                                if (profile) {
+                                    // Initialize metadata if null (it often is for simple inserts)
+                                    if (!newPayload.metadata) newPayload.metadata = {};
+
+                                    // Inject the fetched profile data into metadata so formatNotification can find it
+                                    newPayload.metadata.actor_avatar = profile.avatar_url;
+                                    newPayload.metadata.actor_name = profile.full_name || profile.username;
+                                }
+                            } catch (err) {
+                                console.error('Error fetching real-time actor profile:', err);
+                            }
+                        }
+
+                        const newNotif = formatNotification(newPayload);
+                        setNotifications(prev => [newNotif, ...prev]);
+                        setHasUnread(true);
+                        vibrate(10);
+                    })
+                    .subscribe();
+
+                return () => {
+                    subscription.unsubscribe();
+                };
+            }, [currentUser]);
+
             useEffect(() => {
                 if (activeTab === 'notifs') setHasUnread(false);
             }, [activeTab]);
 
-            // Simulate incoming
+            // Setup pull-to-refresh handler
             useEffect(() => {
-                const timer = setTimeout(() => {
-                    if (activeTab !== 'notifs') setHasUnread(true);
-                    setNotifications(prev => [{
-                        id: `new_${Date.now()}`,
-                        type: "social",
-                        title: "New Interaction",
-                        desc: "Someone just liked your review on 'iPhone 15'.",
-                        time: "Just now",
-                        unread: true,
-                        icon: "User"
-                    }, ...prev]);
-                }, 10000);
-                return () => clearTimeout(timer);
-            }, [activeTab]);
+                const setupPullToRefresh = () => {
+                    if (window.PullToRefresh) {
+                        window.PullToRefresh.onRefresh(async () => {
+                            window.location.reload();
+                        });
+                    } else {
+                        setTimeout(setupPullToRefresh, 100);
+                    }
+                };
+                setTimeout(setupPullToRefresh, 200);
+            }, []);
 
-            const handleSwipeV2 = (id, action) => {
+            // Redirection Highlighting Logic
+            useEffect(() => {
+                const params = new URLSearchParams(window.location.search);
+                const highlight = params.get('highlight');
+                if (highlight && !loading && notifications.length > 0) {
+                    const id = highlight.toLowerCase();
+                    const match = notifications.find(n => String(n.id).toLowerCase() === id);
+
+                    if (match) {
+                        // Set highlight independently of DOM lookup to ensure React drives the UI
+                        setHighlightId(match.id);
+
+                        // Handle scrolling in a separate step
+                        setTimeout(() => {
+                            const element = document.getElementById(`notif-${match.id}`);
+                            if (element) {
+                                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            }
+                        }, 700);
+
+                        // Clear the flash state after animation ends
+                        setTimeout(() => setHighlightId(null), 3500);
+                    }
+                }
+            }, [loading, notifications]);
+
+            const handleSwipeV2 = async (id, action) => {
                 vibrate(10);
-                setNotifications(prev => prev.map(n =>
-                    n.id === id ? { ...n, _status: 'deleted', _action: action, _deleteTime: Date.now() } : n
-                ));
+                const notif = notifications.find(n => n.id === id);
+                if (!notif) return;
+
+                if (action === 'delete') {
+                    // Store original data for potential undo
+                    const originalNotifData = { ...notif };
+
+                    // Optimistic UI update for delete
+                    setNotifications(prev => prev.map(n =>
+                        n.id === id ? { ...n, _status: 'deleted', _action: action, _deleteTime: Date.now(), _originalData: originalNotifData } : n
+                    ));
+
+                    // PERSISTENT DELETE IMMEDIATELY
+                    const deleteFromDB = async () => {
+                        try {
+                            const dbId = notif._dbId;
+                            if (dbId) {
+                                await window.deleteNotification(dbId);
+
+                            }
+                        } catch (err) {
+                            console.error('❌ Persistent delete failed:', err);
+                            window.dispatchEvent(new CustomEvent('toast', {
+                                detail: { message: 'Failed to delete from DB', icon: 'AlertTriangle', isSuccess: false }
+                            }));
+                        }
+                    };
+                    deleteFromDB();
+                } else if (action === 'bookmark') {
+                    const newBookmarkState = !notif.is_bookmarked;
+
+                    // Direct optimistic update for bookmark (stays in list)
+                    setNotifications(prev => prev.map(n =>
+                        n.id === id ? { ...n, is_bookmarked: newBookmarkState } : n
+                    ));
+
+                    try {
+                        const dbId = notif._dbId;
+                        if (dbId) {
+                            await window.toggleNotificationBookmark(dbId, newBookmarkState);
+                            window.dispatchEvent(new CustomEvent('toast', {
+                                detail: {
+                                    message: newBookmarkState ? 'Saved to Bookmarks' : 'Removed from Bookmarks',
+                                    icon: newBookmarkState ? 'BookmarkFilled' : 'Bookmark',
+                                    isSuccess: true
+                                }
+                            }));
+                        }
+                    } catch (err) {
+                        console.error('Failed to toggle bookmark:', err);
+                        // Revert on error
+                        setNotifications(prev => prev.map(n =>
+                            n.id === id ? { ...n, is_bookmarked: !newBookmarkState } : n
+                        ));
+                        window.dispatchEvent(new CustomEvent('toast', {
+                            detail: { message: 'Failed to update bookmark', icon: 'AlertTriangle', isSuccess: false }
+                        }));
+                    }
+                }
             };
 
-            const handleUndoV2 = (id) => {
+            const handleUndoV2 = async (id) => {
                 vibrate(5);
+                const notif = notifications.find(n => n.id === id);
+                const action = notif?._action;
+
+                // 1. Revert UI
                 setNotifications(prev => prev.map(n =>
                     n.id === id ? { ...n, _status: 'active', _action: null } : n
                 ));
+
+                // 2. Revert database if it was a deletion (Re-insert)
+                if (action === 'delete' && notif._originalData) {
+                    try {
+                        // Re-insert the deleted notification
+                        const { id: _, _dbId: __, _status: ___, _action: ____, _deleteTime: _____, _originalData: ______, ...dataToInsert } = notif._originalData;
+                        // Use window.supabase directly to re-insert
+                        const { data, error } = await window.supabase
+                            .from('notifications')
+                            .insert({
+                                user_id: currentUser.id,
+                                type: dataToInsert.type,
+                                category: dataToInsert.category,
+                                title: dataToInsert.title,
+                                message: dataToInsert.desc,
+                                metadata: dataToInsert.metadata,
+                                priority: dataToInsert.critical ? 'critical' : 'normal',
+                                related_post_id: dataToInsert.related_post_id,
+                                related_user_id: dataToInsert.actor_id,
+                                action_url: dataToInsert.action_url,
+                                is_read: !dataToInsert.unread,
+                                icon: dataToInsert.icon
+                            })
+                            .select()
+                            .single();
+
+                        if (error) throw error;
+
+                        // Update the notification in list with new DB ID
+                        setNotifications(prev => prev.map(n =>
+                            n.id === id ? { ...n, _dbId: data.id } : n
+                        ));
+                    } catch (err) {
+                        console.error('Failed to undo deletion (re-insert failed):', err);
+                        window.dispatchEvent(new CustomEvent('toast', {
+                            detail: { message: 'Failed to restore notification', icon: 'AlertTriangle', isSuccess: false }
+                        }));
+                    }
+                }
+
+                // 3. Revert database if it was a bookmark
+                if (action === 'bookmark') {
+                    try {
+                        const dbId = notif?._dbId;
+                        if (dbId) {
+                            await window.toggleNotificationBookmark(dbId, false);
+                        }
+                    } catch (err) {
+                        console.error('Failed to undo bookmark:', err);
+                    }
+                }
             };
 
-            const handleDismissV2 = (id) => {
+            const handleDismissV2 = async (id) => {
+                const notif = notifications.find(n => n.id === id);
+                const action = notif?._action;
+
+                // Only perform persistent delete if the action was 'delete'
+                // Immediate delete is now handled in handleSwipeV2
+                // This just cleans up the UI state
                 setNotifications(prev => prev.filter(n => n.id !== id));
             };
 
-            const markAsRead = (id) => {
+            const markAsRead = async (id) => {
+                const notif = notifications.find(n => n.id === id);
+                if (!notif) return;
+
+                // Update UI immediately
                 setNotifications(prev => prev.map(n => n.id === id ? { ...n, unread: false } : n));
+
+                // Mark as read in database
+                if (notif._dbId && window.markNotificationRead) {
+                    try {
+                        await window.markNotificationRead(notif._dbId);
+                    } catch (err) {
+                        console.error('Failed to mark notification as read:', err);
+                    }
+                }
             };
 
             const toggleSetting = (key) => {
@@ -647,13 +1419,15 @@
                 return list;
             }, [filter, notifications]);
 
-            const unreadCount = notifications.filter(n => n.unread && n._status !== 'deleted').length;
+            const derivedUnreadCount = notifications.filter(n => n.unread && n._status !== 'deleted').length;
+            // Use cached count while loading to prevent flicker (0 -> N)
+            const unreadCount = loading ? (window.getUnreadCountFromCache ? window.getUnreadCountFromCache() : 0) : derivedUnreadCount;
 
             return (
-                <div className="flex-1 flex flex-col h-full relative bg-[#020205]">
+                <div className="flex-1 flex flex-col h-full relative bg-[#020205] overflow-hidden">
 
                     {/* Header */}
-                    <div className="header-glass h-[65px] flex items-center justify-between px-6 sticky top-0 z-30 shrink-0">
+                    <div className={`header-glass fixed top-0 left-0 w-full h-[65px] flex items-center justify-between px-6 z-30 transition-transform duration-500 ease-out ${navVisible ? 'translate-y-0' : '-translate-y-full'}`}>
                         <div className="flex items-center gap-2">
                             <span className="font-heading font-bold text-xl tracking-tight text-white">Notifications</span>
                             {settings.showCount && unreadCount > 0 && (
@@ -675,7 +1449,7 @@
                     </div>
 
                     {/* Content */}
-                    <div className="flex-1 overflow-y-auto px-0 pt-0 pb-28 no-scrollbar">
+                    <div className="absolute inset-0 overflow-y-auto px-0 pt-[65px] pb-28 no-scrollbar" onScroll={handleScroll}>
                         {/* Active Filter Indicator */}
                         {filter !== 'All' && (
                             <div className="px-6 py-2 flex items-center gap-2">
@@ -717,6 +1491,7 @@
                                                 data={n}
                                                 onSwipe={handleSwipeV2}
                                                 onClick={markAsRead}
+                                                highlightId={highlightId}
                                             />
                                         </motion.div>
                                     );
@@ -752,7 +1527,7 @@
                     />
 
                     {/* Bottom Nav */}
-                    <BottomNav activeTab={activeTab} hasUnread={hasUnread} />
+                    <BottomNav activeTab={activeTab} explicitCount={unreadCount} isVisible={navVisible} />
                 </div>
             );
         };
