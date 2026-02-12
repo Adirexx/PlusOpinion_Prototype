@@ -392,7 +392,7 @@
         // 🔗 GLOBAL NAVIGATION FUNCTION (PASTE HERE)
         const goTo = (page) => {
             window.scrollTo(0, 0);
-            window.location.href = page;
+            window.navigateTo(page);
         };
 
         const checkMySpaceRedirect = async () => {
@@ -400,7 +400,7 @@
                 const user = await window.getCurrentUser();
 
                 if (!user) {
-                    window.location.href = 'MY-SPACE-USER.HTML';
+                    window.navigateTo('MY-SPACE-USER.HTML');
                     return;
                 }
                 const { data: profile } = await window.supabase
@@ -410,12 +410,12 @@
                     .single();
 
                 if (profile && profile.is_business_account) {
-                    window.location.href = 'MY-SPACE-COMPANIES.HTML';
+                    window.navigateTo('MY-SPACE-COMPANIES.HTML');
                 } else {
-                    window.location.href = 'MY-SPACE-USER.HTML';
+                    window.navigateTo('MY-SPACE-USER.HTML');
                 }
             } catch (e) {
-                window.location.href = 'MY-SPACE-USER.HTML';
+                window.navigateTo('MY-SPACE-USER.HTML');
             }
         };
 
@@ -425,7 +425,7 @@
                 window.PlusOpinionActions[action]();
             } else {
                 // On another page → redirect with hash
-                window.location.href = `HOMEPAGE_FINAL.HTML#${action.replace('open', '').toLowerCase()}`;
+                window.navigateTo(`HOMEPAGE_FINAL.HTML#${action.replace('open', '').toLowerCase()}`);
             }
         }
 
@@ -433,7 +433,7 @@
             if (window.PlusOpinionActions?.[action]) {
                 window.PlusOpinionActions[action]();
             } else {
-                window.location.href = `HOMEPAGE_FINAL.HTML#${action.replace('open', '').toLowerCase()}`;
+                window.navigateTo(`HOMEPAGE_FINAL.HTML#${action.replace('open', '').toLowerCase()}`);
             }
         };
 
@@ -602,7 +602,7 @@
                                 onClick={() => {
                                     vibrate();
                                     const getPath = (p) => window.RouteCleaner ? window.RouteCleaner.getCleanPath(p) : p;
-                                    window.location.href = `${getPath('PUBLIC-POV-PROFILE.HTML')}?id=${comment.user_id}`;
+                                    window.navigateTo(`PUBLIC-POV-PROFILE.HTML?id=${comment.user_id}`);
                                 }}
                             />
                         </div>
@@ -615,7 +615,7 @@
                                     onClick={() => {
                                         vibrate();
                                         const getPath = (p) => window.RouteCleaner ? window.RouteCleaner.getCleanPath(p) : p;
-                                        window.location.href = `${getPath('PUBLIC-POV-PROFILE.HTML')}?id=${comment.user_id}`;
+                                        window.navigateTo(`PUBLIC-POV-PROFILE.HTML?id=${comment.user_id}`);
                                     }}
                                 >
                                     {comment.user}
@@ -2418,7 +2418,7 @@
                     'insights': 'insights'
                 };
                 const view = viewMap[section] || 'dashboard';
-                window.location.href = `MY-SPACE-USER.HTML?view=${view}`;
+                window.navigateTo(`MY-SPACE-USER.HTML?view=${view}`);
             };
 
             // SWIPE LOGIC FIXED
