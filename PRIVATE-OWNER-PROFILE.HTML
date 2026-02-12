@@ -2052,9 +2052,9 @@
 
             const [isReportModalOpen, setIsReportModalOpen] = useState(false);
             const [reportPostId, setReportPostId] = useState(null);
-            const [hiddenPostIds, setHiddenPostIds] = useState(new Set());
-            const [mutedBrands, setMutedBrands] = useState(new Set());
-            const [mutedCategories, setMutedCategories] = useState(new Set());
+            const [hiddenPostIds, setHiddenPostIds] = new Set();
+            const [mutedBrands, setMutedBrands] = new Set();
+            const [mutedCategories, setMutedCategories] = new Set();
 
             // Delete Modal State
             const [deleteModal, setDeleteModal] = useState({ isOpen: false, postId: null });
@@ -2109,7 +2109,7 @@
                     if (profile) {
                         const profileObj = {
                             full_name: profile.full_name || "User",
-                            username: profile.username || "",
+                            username: profile.username || "user",
                             bio: profile.bio || "",
                             avatar_url: profile.avatar_url || "",
                             banner_url: profile.banner_url || "",
@@ -2356,8 +2356,6 @@
                     window.supabase.removeChannel(subscription);
                 };
             };
-
-
 
 
 
