@@ -56,5 +56,67 @@
                 }
             ]
         }
+    ],
+    "rewrites": [
+        {
+            "source": "/feed",
+            "destination": "/HOMEPAGE_FINAL.HTML"
+        },
+        {
+            "source": "/bookmarks",
+            "destination": "/BOOKMARKS.HTML"
+        },
+        {
+            "source": "/categories",
+            "destination": "/CATAGORYPAGE.HTML"
+        },
+        {
+            "source": "/myspace",
+            "destination": "/MY SPACE FINAL (USER).HTML"
+        },
+        {
+            "source": "/workspace",
+            "destination": "/MY SPACE FINAL(COMPANIES).HTML"
+        },
+        {
+            "source": "/notifications",
+            "destination": "/NOTIFICATION PANEL.HTML"
+        },
+        {
+            "source": "/myprofile",
+            "destination": "/PRIVATE OWNER PROFILE.HTML"
+        },
+        {
+            "source": "/profile",
+            "destination": "/PUBLIC POV PROFILE.HTML"
+        },
+        {
+            "source": "/onboarding",
+            "destination": "/onboarding.html"
+        },
+        {
+            "source": "/reset-password",
+            "destination": "/reset-password.html"
+        },
+        {
+            "source": "/change-password",
+            "destination": "/change-password.html"
+        },
+        {
+            "source": "/about",
+            "destination": "/ABOUT.HTML"
+        },
+        {
+            "source": "/support",
+            "destination": "/SUPPORT.HTML"
+        },
+        {
+            "source": "/privacy-policy",
+            "destination": "/PRIVACY_POLICY.HTML"
+        },
+        {
+            "source": "/terms-and-conditions",
+            "destination": "/TERMS_AND_CONDITIONS.HTML"
+        }
     ]
 }
