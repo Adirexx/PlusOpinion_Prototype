@@ -294,7 +294,7 @@
         // 🔗 GLOBAL NAVIGATION FUNCTION
         const goTo = (page) => {
             window.scrollTo(0, 0);
-            window.location.href = page;
+            window.navigateTo(page);
         };
 
         const checkMySpaceRedirect = async () => {
@@ -302,7 +302,7 @@
                 const user = await window.getCurrentUser();
 
                 if (!user) {
-                    window.location.href = 'MY-SPACE-USER.HTML';
+                    window.navigateTo('MY-SPACE-USER.HTML');
                     return;
                 }
                 const { data: profile } = await window.supabase
@@ -312,12 +312,12 @@
                     .single();
 
                 if (profile && profile.is_business_account) {
-                    window.location.href = 'MY-SPACE-COMPANIES.HTML';
+                    window.navigateTo('MY-SPACE-COMPANIES.HTML');
                 } else {
-                    window.location.href = 'MY-SPACE-USER.HTML';
+                    window.navigateTo('MY-SPACE-USER.HTML');
                 }
             } catch (e) {
-                window.location.href = 'MY-SPACE-USER.HTML';
+                window.navigateTo('MY-SPACE-USER.HTML');
             }
         };
 
@@ -327,7 +327,7 @@
                 window.PlusOpinionActions[action]();
             } else {
                 // On another page → redirect with hash
-                window.location.href = `HOMEPAGE_FINAL.HTML#${action.replace('open', '').toLowerCase()}`;
+                window.navigateTo(`HOMEPAGE_FINAL.HTML#${action.replace('open', '').toLowerCase()}`);
             }
         }
 
@@ -335,7 +335,7 @@
             if (window.PlusOpinionActions?.[action]) {
                 window.PlusOpinionActions[action]();
             } else {
-                window.location.href = `HOMEPAGE_FINAL.HTML#${action.replace('open', '').toLowerCase()}`;
+                window.navigateTo(`HOMEPAGE_FINAL.HTML#${action.replace('open', '').toLowerCase()}`);
             }
         };
 
@@ -498,17 +498,17 @@
             // Handle click on avatar/icon - navigate to relevant page
             const handleIconClick = (e) => {
                 e.stopPropagation();
-                const getPath = (p) => window.RouteCleaner ? window.RouteCleaner.getCleanPath(p) : p;
                 if (data.actor_id) {
-                    window.location.href = `${getPath('PUBLIC-POV-PROFILE.HTML')}?id=${data.actor_id}`;
+                    window.navigateTo(`PUBLIC-POV-PROFILE.HTML?id=${data.actor_id}`);
                 } else if (data.metadata?.company_id) {
-                    window.location.href = `${getPath('COMPANY PROFILE.HTML')}?id=${data.metadata.company_id}`;
+                    // Company profile page doesn't exist yet, redirect to workspace
+                    window.navigateTo('MY-SPACE-COMPANIES.HTML');
                 } else if (data.category === 'revenue') {
-                    window.location.href = `${getPath('MY-SPACE-USER.HTML')}#revenue`;
+                    window.navigateTo(`MY-SPACE-USER.HTML#revenue`);
                 } else if (data.category === 'security') {
-                    window.location.href = `${getPath('PRIVATE-OWNER-PROFILE.HTML')}#security`;
+                    window.navigateTo(`PRIVATE-OWNER-PROFILE.HTML#security`);
                 } else if (data.type === 'rqs_updated') {
-                    window.location.href = `${getPath('MY-SPACE-USER.HTML')}#rqs`;
+                    window.navigateTo(`MY-SPACE-USER.HTML#rqs`);
                 }
             };
 
