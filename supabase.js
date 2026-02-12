@@ -7,7 +7,7 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 // Wait for Supabase UMD to load, then create client
 function initializeSupabase() {
   if (!window.supabase) {
-    console.error('Supabase UMD library not loaded');
+    // Supabase UMD library not loaded - initialization failed
     return null;
   }
 
