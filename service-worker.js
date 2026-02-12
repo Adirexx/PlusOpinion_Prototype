@@ -1,6 +1,6 @@
 // Dynamic version - will be replaced at build time
 // For localhost, use timestamp; for production, use build timestamp
-// Updated at: API_FIX_TIMESTAMP
+// Updated at: SYNTAX_FIX_2026_02_13
 const VERSION = self.registration.scope.includes('localhost')
   ? Date.now().toString()
   : 'BUILD_TIMESTAMP_PLACEHOLDER';
