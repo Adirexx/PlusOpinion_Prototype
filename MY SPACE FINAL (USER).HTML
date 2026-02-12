@@ -30,20 +30,38 @@
     <!-- Global Design System -->
     <link rel="stylesheet" href="./global.css">
 
+    <!-- Favicon for browser tabs -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/icon-192.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/icon-192.png">
+
     <link rel="manifest" href="./manifest.json">
     <meta name="theme-color" content="#020205">
 
     <!-- Supabase UMD bundle (must load before supabase.js) -->
     <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <script type="module" src="./supabase.js"></script>
+    <script type="module" src="./api.js"></script>
+
+    <!-- SPA Core Infrastructure -->
+    <script src="./state_manager.js"></script>
+    <script src="./router.js"></script>
+    <script src="./pull_to_refresh.js"></script>
+    <script src="./navigation_preloader.js"></script>
+
+    <script src="./rqs_calculator.js"></script>
+    <script type="module" src="./notifications.js"></script>
 
     <!-- Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="./runtime.js"></script>
-    <script src="./bridge.js"></script>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script>if ("serviceWorker" in navigator) { window.addEventListener("load", () => { navigator.serviceWorker.register("./service-worker.js"); }); }</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="./payment_gateway.js"></script>
+    <script src="./auth_guard.js"></script>
 
     <!-- Visual Tokens & Global CSS -->
     <style>
@@ -177,6 +195,20 @@
 
         .font-heading {
             font-family: var(--font-heading);
+        }
+
+        .nav-glass {
+            background: rgba(3, 4, 18, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid var(--glass-border);
+        }
+
+        .top-nav-glass {
+            background: rgba(3, 4, 18, 0.9);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--glass-border);
         }
 
         /* --- ANIMATIONS --- */
@@ -326,6 +358,9 @@
     <div id="root"></div>
 
     <script type="text/babel">
+        // Default Avatar (SVG Data URI - Rounded Shoulder, Thinner Stroke 1.2px, Scaled Down)
+        // Default Avatar (Refined: Navbar Style Match - Reduced Gap cy=9, Slim 0.8px, Extracted Blue #326bcb)
+        const DEFAULT_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none'%3E%3Crect width='24' height='24' fill='%23090e1a'/%3E%3Cpath d='M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2' stroke='%23326bcb' stroke-width='0.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='12' cy='9' r='4' stroke='%23326bcb' stroke-width='0.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E";
         const { useState, useEffect, useRef } = React;
         const { createRoot } = ReactDOM;
 
@@ -333,6 +368,10 @@
         const goTo = (page) => {
             window.scrollTo(0, 0);
             window.location.href = page;
+        };
+
+        const vibrate = (ms) => {
+            if (navigator.vibrate) navigator.vibrate(ms || 5);
         };
 
         function dispatchAction(action) {
@@ -365,9 +404,10 @@
         // --- ICONS ---
         const Icons = {
             ArrowLeft: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12 19-7-7 7-7" /><path d="M19 12H5" /></svg>,
-            Settings: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.74v-.47a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" /><circle cx="12" cy="12" r="3" /></svg>,
+            Settings: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.74v-.47a2 2 0 0 1 1-1.74l-.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" /><circle cx="12" cy="12" r="3" /></svg>,
             ChevronRight: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6" /></svg>,
             Wallet: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4" /><path d="M3 5v14a2 2 0 0 0 2 2h16v-5" /><path d="M18 12a2 2 0 0 0 0 4h4v-4Z" /></svg>,
+            BarChart2: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 20V10" /><path d="M12 20V4" /><path d="M6 20V14" /></svg>,
             Chart: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18" /><path d="m19 9-5 5-4-4-3 3" /></svg>,
             Star: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>,
             Zap: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>,
@@ -387,6 +427,7 @@
             Mail: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="16" x="2" y="4" rx="2" /><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" /></svg>,
             Eye: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" /><circle cx="12" cy="12" r="3" /></svg>,
             Users: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>,
+            X: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>,
         };
 
         const Icon = ({ icon, size = 20, className = "" }) => {
@@ -395,68 +436,31 @@
             return <Component width={size} height={size} className={className} />;
         };
 
-        // --- DATA ---
-        const BRAND_LOGOS = {
-            // SimpleIcons (verified)
-            "OnePlus": "https://cdn.simpleicons.org/oneplus/000000",
-            "LG India": "https://cdn.simpleicons.org/lg/000000",
-            "Sony": "https://cdn.simpleicons.org/sony/000000",
-            "Cursor": "https://cdn.simpleicons.org/cursor/000000",
-            "Nike": "https://cdn.simpleicons.org/nike/000000",
-            "Samsung": "https://cdn.simpleicons.org/samsung/000000",
-            "Tesla": "https://cdn.simpleicons.org/tesla/000000",
-            "Apple": "https://cdn.simpleicons.org/apple/000000",
+        const Avatar = ({ src, className, fallbackSize = 24, onClick }) => {
+            const [error, setError] = useState(false);
 
-            // ❌ NOT on SimpleIcons → Official SVGs
-            "Ola Electric": "https://upload.wikimedia.org/wikipedia/commons/7/7e/Ola_Electric_Logo.svg",
-            "Dyson": "https://upload.wikimedia.org/wikipedia/commons/1/14/Dyson_logo.svg",
-            "Rare Beauty": "https://upload.wikimedia.org/wikipedia/commons/4/4e/Rare_Beauty_logo.svg",
-        };
+            useEffect(() => { setError(false); }, [src]);
 
-        const RAW_POSTS = [
-            { id: 1, name: "Priya Sharma", username: "priya_s", seenBy: "OnePlus", time: "2h" },
-            { id: 2, name: "Vikram Singh", username: "vikram_ev", seenBy: "Ola Electric", time: "4h" },
-            { id: 4, name: "GamerX_99", username: "gamerx99", seenBy: "LG India", time: "1d" },
-            { id: 5, name: "TechJunkie", username: "techie_j", seenBy: "Sony", time: "1d" },
-            { id: 7, name: "David Chen", username: "dchen_dev", seenBy: "Cursor", time: "3d" },
-            { id: 8, name: "Emily Rose", username: "emrose_fit", seenBy: "Nike", time: "3d" },
-            { id: 9, name: "Rahul Verma", username: "rahul_v", seenBy: "Samsung", time: "4d" },
-            { id: 11, name: "Alice Cooper", username: "alice_c", seenBy: "Dyson", time: "5d" },
-            { id: 13, name: "Sneha Patel", username: "sneha_p", seenBy: "Rare Beauty", time: "1w" },
-            { id: 21, name: "Carlos M", username: "carlos_m", seenBy: "Tesla", time: "3w" },
-            { id: 37, name: "AppleFan", username: "cupertino_s", seenBy: "Apple", time: "3mo" }
-        ];
-
-        const USER_DATA = {
-            name: "Alex Rivera",
-            avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix&backgroundColor=0A0F1D",
-            rqs: 84
-        };
-
-        const DATA_STORE = {
-            earnings: {
-                total: 12450.00,
-                lastMonth: 3400.00,
-                logs: [
-                    { id: 1, label: "Verified Review Reward", amount: 12, status: "Paid", date: "Today", icon: "Check" },
-                    { id: 2, label: "Helpful Vote Bonus", amount: 5, status: "Paid", date: "Yesterday", icon: "Star" },
-                    { id: 3, label: "Brand Seen (Samsung)", amount: 8, status: "Pending", date: "Dec 6", icon: "Zap" },
-                    { id: 4, label: "Affiliate: OnePlus", amount: 150, status: "Paid", date: "Dec 4", icon: "Wallet" },
-                    { id: 5, label: "Weekly Top Contributor", amount: 50, status: "Paid", date: "Dec 1", icon: "Star" }
-                ],
-                coupons: [
-                    { id: 1, label: "Nykaa ₹100 OFF", bg: "rgba(47, 139, 255, 0.15)" },
-                    { id: 2, label: "Flipkart 5%", bg: "rgba(255, 255, 255, 0.1)" },
-                    { id: 3, label: "Myntra Ship", bg: "rgba(255, 255, 255, 0.05)" },
-                    { id: 4, label: "Amazon Prime 1M", bg: "rgba(255, 255, 255, 0.1)" }
-                ],
-                breakdown: [
-                    { label: "Verified Reviews", amount: 8200, percent: 65, color: "var(--neon)" },
-                    { label: "Helpful Bonuses", amount: 2100, percent: 18, color: "rgba(255, 255, 255, 0.8)" },
-                    { label: "Affiliate Clicks", amount: 1500, percent: 12, color: "rgba(47, 139, 255, 0.6)" },
-                    { label: "Brand Tips", amount: 650, percent: 5, color: "rgba(255, 255, 255, 0.3)" }
-                ]
+            if (!src || error) {
+                return (
+                    <img
+                        src={DEFAULT_AVATAR}
+                        className={className}
+                        onClick={onClick}
+                        alt="Default Avatar"
+                    />
+                );
             }
+
+            return (
+                <img
+                    src={src}
+                    className={className}
+                    onError={() => setError(true)}
+                    onClick={onClick}
+                    alt="Avatar"
+                />
+            );
         };
 
         // --- COMPONENTS ---
@@ -465,117 +469,231 @@
         const ViewWrapper = ({ children, onScroll }) => {
             return (
                 <div
-                    className="view-content px-4 pt-4 pb-24 space-y-4"
+                    className="view-content absolute inset-0 overflow-y-auto no-scrollbar pt-[75px] pb-28 px-4"
                     onScroll={onScroll}
                 >
-                    {children}
+                    <div className="space-y-4">
+                        {children}
+                    </div>
                 </div>
             );
         };
 
-        const SectionHeader = ({ title, onBack }) => (
-            <div className="header-glass sticky top-0 w-full flex items-center justify-between px-4 h-[65px] z-50 animate-slide-in shrink-0">
+        const SectionHeader = ({ title, onBack, rightElement, isVisible = true }) => (
+            <div className={`header-glass fixed top-0 left-0 w-full flex items-center justify-between px-4 h-[65px] z-50 animate-slide-in transition-transform duration-500 ease-in-out ${isVisible ? 'translate-y-0' : '-translate-y-full'}`}>
                 <div className="flex items-center gap-3">
                     <button onClick={onBack} className="p-2 -ml-2 rounded-full hover:bg-white/5 active:bg-white/10 transition-colors">
                         <Icon icon="ArrowLeft" size={20} className="text-white" />
                     </button>
                     <h2 className="font-heading font-bold text-lg text-white tracking-wide">{title}</h2>
                 </div>
+                {rightElement && <div>{rightElement}</div>}
             </div>
         );
+
+        // WITHDRAWAL MODAL
+        const WithdrawalModal = ({ isOpen, onClose, balance, onConfirm }) => {
+            if (!isOpen) return null;
+            const [amount, setAmount] = useState('');
+            const [method, setMethod] = useState('');
+            const [isProcessing, setIsProcessing] = useState(false);
+
+            const handleRequest = async () => {
+                const val = parseFloat(amount);
+                if (!val || val < 100) {
+                    window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Minimum withdrawal is ₹100', icon: 'AlertTriangle' } }));
+                    return;
+                }
+                if (val > 3000) {
+                    window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Maximum withdrawal is ₹3,000 (beta limit)', icon: 'AlertTriangle' } }));
+                    return;
+                }
+                if (val > balance) {
+                    window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Insufficient balance', icon: 'AlertTriangle' } }));
+                    return;
+                }
+                if (!method) {
+                    window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Select a payout method', icon: 'AlertTriangle' } }));
+                    return;
+                }
+
+                setIsProcessing(true);
+                await onConfirm(val, method);
+                setIsProcessing(false);
+                onClose();
+            };
+
+            return (
+                <div className="fixed inset-0 z-[80] flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-black/80 backdrop-blur-md animate-menu-fade" onClick={onClose} />
+                    <div className="relative w-full max-w-[320px] bg-[#0A0F1D] border border-white/10 rounded-3xl p-6 shadow-2xl animate-pop">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-lg font-heading font-bold text-white">Withdraw Funds</h3>
+                            <button onClick={onClose} className="p-2 bg-white/5 rounded-full text-muted hover:text-white"><Icon icon="X" size={18} /></button>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div>
+                                <label className="text-[10px] uppercase font-bold text-muted tracking-wider mb-1.5 block">Amount (₹100 - ₹3,000)</label>
+                                <div className="relative">
+                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white font-bold">₹</span>
+                                    <input
+                                        type="number"
+                                        value={amount}
+                                        onChange={e => setAmount(e.target.value)}
+                                        className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-8 pr-4 text-white font-bold focus:border-neon/50 outline-none transition-colors"
+                                        placeholder="0.00"
+                                        min="100"
+                                        max="3000"
+                                    />
+                                </div>
+                                <div className="text-right mt-1">
+                                    <span className="text-[10px] text-muted">Available: ₹{balance.toLocaleString()}</span>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="text-[10px] uppercase font-bold text-muted tracking-wider mb-1.5 block">Payout method</label>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {[{ label: 'UPI', value: 'upi' }, { label: 'Bank Transfer', value: 'bank' }].map(m => (
+                                        <button
+                                            key={m.value}
+                                            onClick={() => setMethod(m.value)}
+                                            className={`py-2.5 rounded-xl text-xs font-bold border transition-all ${method === m.value ? 'bg-neon/10 border-neon text-neon' : 'bg-white/5 border-transparent text-muted hover:border-white/10'}`}
+                                        >
+                                            {m.label}
+                                        </button>
+                                    ))}
+                                </div>
+                                <p className="text-[9px] text-muted/70 mt-2">Payment details from your Partner Application will be used</p>
+                            </div>
+
+                            <button
+                                onClick={handleRequest}
+                                disabled={isProcessing}
+                                className="w-full py-3.5 rounded-xl bg-gradient-to-r from-neon to-blue-500 text-white font-bold text-sm shadow-lg shadow-neon/20 active:scale-[0.98] transition-all disabled:opacity-50 mt-2"
+                            >
+                                {isProcessing ? 'Processing...' : 'Request Withdrawal'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
 
         // 1. EARNINGS STUDIO
-        const EarningsView = ({ onBack, onScroll }) => (
-            <div className="flex flex-col h-full bg-[#020205] animate-slide-in">
-                <SectionHeader title="Revenue Studio" onBack={onBack} />
-                <ViewWrapper onScroll={onScroll}>
-                    {/* Main Revenue Card */}
-                    <div className="glass-panel p-6 rounded-2xl relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-neon/10 rounded-full blur-3xl -mr-10 -mt-10"></div>
-                        <p className="text-muted text-xs font-medium uppercase tracking-wider mb-1">Total Estimated Revenue</p>
-                        <h1 className="font-heading text-4xl font-bold text-white mb-6">₹{DATA_STORE.earnings.total.toLocaleString('en-IN')}</h1>
+        const EarningsView = ({ onBack, onScroll, isHeaderVisible, earnings: rawEarnings, profile }) => {
+            const [showWithdrawModal, setShowWithdrawModal] = useState(false);
 
-                        <div className="grid grid-cols-2 gap-4 border-t border-white/10 pt-4">
-                            <div>
-                                <p className="text-[10px] text-muted uppercase">Last 30 Days</p>
-                                <p className="text-lg font-bold text-white">+₹{DATA_STORE.earnings.lastMonth}</p>
+            // Safety Defaults
+            const earnings = {
+                total: 0,
+                lastMonth: 0,
+                logs: [],
+                coupons: [],
+                breakdown: [],
+                ...rawEarnings
+            };
+
+            const handleWithdraw = async (amount, method) => {
+                try {
+                    await window.requestWithdrawal(amount, method);
+                    window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Withdrawal requested successfully!', icon: 'Check', isSuccess: true } }));
+                } catch (error) {
+                    console.error(error);
+                    window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Failed to request withdrawal', icon: 'AlertTriangle' } }));
+                }
+            };
+
+            return (
+                <div className="flex flex-col h-full bg-[#020205] animate-slide-in relative">
+                    <SectionHeader title="Revenue Studio" onBack={onBack} isVisible={isHeaderVisible} />
+                    <ViewWrapper onScroll={onScroll}>
+                        {/* Main Revenue Card */}
+                        <div className="glass-panel p-6 rounded-2xl relative overflow-hidden group">
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-neon/10 rounded-full blur-3xl -mr-10 -mt-10"></div>
+                            <p className="text-muted text-xs font-medium uppercase tracking-wider mb-1">Monthly Earning</p>
+                            <h1 className="font-heading text-4xl font-bold text-white mb-6">₹{earnings.total.toLocaleString('en-IN')}</h1>
+
+                            <div className="grid grid-cols-2 gap-4 border-t border-white/10 pt-4">
+                                <div>
+                                    <p className="text-[10px] text-muted uppercase">Last 30 Days</p>
+                                    <p className="text-lg font-bold text-white">+₹{earnings.lastMonth}</p>
+                                </div>
+                                <div>
+                                    <p className="text-[10px] text-muted uppercase">RPM</p>
+                                    <p className="text-lg font-bold text-white">₹145</p>
+                                </div>
                             </div>
-                            <div>
-                                <p className="text-[10px] text-muted uppercase">RPM</p>
-                                <p className="text-lg font-bold text-white">₹145</p>
+                        </div>
+
+                        {/* Download Statement Section */}
+                        <div className="flex gap-3 mb-4">
+                            <button
+                                onClick={() => window.generateStatement(profile, earnings)}
+                                className="flex-1 glass-panel py-4 rounded-2xl flex flex-col items-center justify-center gap-2 border border-white/5 hover:border-neon/30 transition-all active:scale-[0.98]"
+                            >
+                                <div className="w-10 h-10 rounded-full bg-neon/10 flex items-center justify-center text-neon">
+                                    <Icon icon="Download" size={20} />
+                                </div>
+                                <span className="text-[11px] font-bold text-white uppercase tracking-wider">Download Statement</span>
+                            </button>
+
+                            <button
+                                onClick={() => setShowWithdrawModal(true)}
+                                className="flex-1 bg-neon py-4 rounded-2xl flex flex-col items-center justify-center gap-2 border border-neon/20 hover:bg-neon/90 transition-all active:scale-[0.98]"
+                            >
+                                <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-white">
+                                    <Icon icon="Wallet" size={20} />
+                                </div>
+                                <span className="text-[11px] font-bold text-white uppercase tracking-wider">Request Payout</span>
+                            </button>
+                        </div>
+
+                        {/* Recent logs for withdrawal */}
+                        <div>
+                            <h3 className="text-xs font-bold text-white mb-3 uppercase tracking-wider px-1">Recent Activity</h3>
+                            <div className="space-y-2">
+                                {earnings.logs.length === 0 ? (
+                                    <p className="text-xs text-muted text-center py-4">No recent activity.</p>
+                                ) : earnings.logs.map(log => (
+                                    <div key={log.id} className="glass-panel rounded-xl p-4 flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <div className="bg-white/5 p-2.5 rounded-xl">
+                                                <Icon icon={log.icon || 'Clock'} size={16} className="text-muted" />
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-bold text-white mb-0.5">{log.label}</p>
+                                                <p className="text-[10px] text-muted font-medium">{log.date} • <span className={log.status === 'Paid' ? 'text-accent-green' : 'text-accent-gold'}>{log.status}</span></p>
+                                            </div>
+                                        </div>
+                                        <span className="font-heading font-bold text-sm text-white">{log.amount < 0 ? '-' : '+'}₹{Math.abs(log.amount)}</span>
+                                    </div>
+                                ))}
                             </div>
                         </div>
-                    </div>
 
-                    {/* Coupons Carousel */}
-                    <div>
-                        <div className="flex items-center justify-between mb-3 px-1">
-                            <h3 className="text-xs font-bold text-white uppercase tracking-wider">Active Coupons</h3>
-                            <span className="text-[10px] text-neon">View All</span>
-                        </div>
-                        <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2">
-                            {DATA_STORE.earnings.coupons.map((c, i) => (
-                                <div key={i} className="shrink-0 rounded-xl p-3 flex items-center gap-3 min-w-[150px] glass-panel border border-white/10">
-                                    <div style={{ width: 40, height: 40, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', background: c.bg }}>
-                                        <Icon icon="Gift" size={16} className="text-white" />
-                                    </div>
-                                    <span className="text-xs font-bold text-white leading-tight">{c.label}</span>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
+                        <button
+                            onClick={() => { vibrate(5); setShowWithdrawModal(true); }}
+                            className="w-full py-3.5 rounded-xl bg-white text-black font-bold text-sm shadow-[0_0_20px_rgba(255,255,255,0.15)] active:scale-[0.98] transition-transform"
+                        >
+                            Withdraw Funds
+                        </button>
+                    </ViewWrapper>
 
-                    {/* Recent Logs */}
-                    <div>
-                        <h3 className="text-xs font-bold text-white mb-3 uppercase tracking-wider px-1">Recent Activity</h3>
-                        <div className="space-y-2">
-                            {DATA_STORE.earnings.logs.map(log => (
-                                <div key={log.id} className="glass-panel rounded-xl p-4 flex items-center justify-between">
-                                    <div className="flex items-center gap-3">
-                                        <div className="bg-white/5 p-2.5 rounded-xl">
-                                            <Icon icon={log.icon} size={16} className="text-muted" />
-                                        </div>
-                                        <div>
-                                            <p className="text-sm font-bold text-white mb-0.5">{log.label}</p>
-                                            <p className="text-[10px] text-muted font-medium">{log.date} • <span className={log.status === 'Paid' ? 'text-accent-green' : 'text-accent-gold'}>{log.status}</span></p>
-                                        </div>
-                                    </div>
-                                    <span className="font-heading font-bold text-sm text-white">+₹{log.amount}</span>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Breakdown Chart */}
-                    <div className="glass-panel p-5 rounded-2xl">
-                        <h3 className="font-heading font-bold text-white mb-4 flex items-center gap-2">
-                            <Icon icon="Chart" size={16} className="text-neon" /> Revenue Sources
-                        </h3>
-                        <div className="space-y-5">
-                            {DATA_STORE.earnings.breakdown.map((item, i) => (
-                                <div key={i}>
-                                    <div className="flex justify-between text-xs mb-1.5">
-                                        <span className="text-white font-medium">{item.label}</span>
-                                        <span className="text-muted">₹{item.amount.toLocaleString()} ({item.percent}%)</span>
-                                    </div>
-                                    <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
-                                        <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${item.percent}%`, backgroundColor: item.color }}></div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    <button className="w-full py-3.5 rounded-xl bg-white text-black font-bold text-sm shadow-[0_0_20px_rgba(255,255,255,0.15)] active:scale-[0.98] transition-transform">
-                        Withdraw Funds
-                    </button>
-                </ViewWrapper>
-            </div>
-        );
+                    <WithdrawalModal
+                        isOpen={showWithdrawModal}
+                        onClose={() => setShowWithdrawModal(false)}
+                        balance={earnings.total}
+                        onConfirm={handleWithdraw}
+                    />
+                </div>
+            );
+        };
 
         // 2. RQS VIEW (Correct Start Point & Bench)
-        const RQSView = ({ onBack, onScroll }) => {
-            const score = USER_DATA.rqs;
+        const RQSView = ({ onBack, onScroll, isHeaderVisible, profile }) => {
+            const score = profile.rqs;
             const radius = 90;
             const circumference = 2 * Math.PI * radius;
             const [dashOffset, setDashOffset] = useState(circumference);
@@ -584,7 +702,7 @@
             useEffect(() => {
                 const targetOffset = circumference - ((score / 100) * circumference);
                 setTimeout(() => setDashOffset(targetOffset), 300);
-            }, []);
+            }, [score]);
 
             // Calculate benchmark position: 75% of circle from top
             // Top is 0 degrees (due to rotate(-90)). 75% of 360 is 270 degrees.
@@ -593,7 +711,7 @@
 
             return (
                 <div className="flex flex-col h-full bg-[#020205] animate-slide-in">
-                    <SectionHeader title="Reputation Score" onBack={onBack} />
+                    <SectionHeader title="Reputation Score" onBack={onBack} isVisible={isHeaderVisible} />
                     <ViewWrapper onScroll={onScroll}>
                         <div className="flex flex-col items-center">
                             <div className="relative w-64 h-64 mb-8">
@@ -644,30 +762,40 @@
                                         <Icon icon="Check" size={18} className="text-white" />
                                         <div>
                                             <p className="text-xs font-bold text-white">Consistency</p>
-                                            <p className="text-[10px] text-muted">Posting frequency</p>
+                                            <p className="text-[10px] text-muted">Posts & Comments Given</p>
                                         </div>
                                     </div>
-                                    <span className="text-sm font-heading font-bold text-white">92/100</span>
+                                    <span className="text-sm font-heading font-bold text-white">{profile.rqs_consistency}/100</span>
                                 </div>
                                 <div className="glass-panel p-4 rounded-xl flex items-center justify-between">
                                     <div className="flex items-center gap-3">
                                         <Icon icon="Shield" size={18} className="text-neon" />
                                         <div>
                                             <p className="text-xs font-bold text-white">Verification</p>
-                                            <p className="text-[10px] text-muted">Authentic purchases</p>
+                                            <p className="text-[10px] text-muted">Verified Product Reviews</p>
                                         </div>
                                     </div>
-                                    <span className="text-sm font-heading font-bold text-white">100/100</span>
+                                    <span className="text-sm font-heading font-bold text-white">{profile.rqs_verification}/100</span>
                                 </div>
                                 <div className="glass-panel p-4 rounded-xl flex items-center justify-between">
                                     <div className="flex items-center gap-3">
                                         <Icon icon="Star" size={18} className="text-white" />
                                         <div>
                                             <p className="text-xs font-bold text-white">Impact</p>
-                                            <p className="text-[10px] text-muted">Community helpfulness</p>
+                                            <p className="text-[10px] text-muted">Agrees & Comments Rec.</p>
                                         </div>
                                     </div>
-                                    <span className="text-sm font-heading font-bold text-white">78/100</span>
+                                    <span className="text-sm font-heading font-bold text-white">{profile.rqs_impact}/100</span>
+                                </div>
+                                <div className="glass-panel p-4 rounded-xl flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <Icon icon="User" size={18} className="text-white" />
+                                        <div>
+                                            <p className="text-xs font-bold text-white">Legacy</p>
+                                            <p className="text-[10px] text-muted">Account Age & Profile</p>
+                                        </div>
+                                    </div>
+                                    <span className="text-sm font-heading font-bold text-white">{profile.rqs_legacy_score || 0}/100</span>
                                 </div>
                             </div>
                         </div>
@@ -676,167 +804,268 @@
             );
         };
 
-        // 3. MONETIZATION
-        const MonetizationView = ({ onBack, onScroll }) => (
-            <div className="flex flex-col h-full bg-[#020205] animate-slide-in">
-                <SectionHeader title="Partner Program" onBack={onBack} />
-                <ViewWrapper onScroll={onScroll}>
-                    {/* Status Header */}
-                    <div className="relative pt-4 pb-8 text-center">
-                        <div className="inline-block relative">
-                            <div className="w-20 h-20 rounded-full border-2 border-neon/50 flex items-center justify-center bg-neon/5 shadow-[0_0_30px_rgba(47,139,255,0.15)]">
-                                <Icon icon="Zap" size={32} className="text-neon" />
-                            </div>
-                            <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-neon text-white text-[9px] font-bold px-3 py-1 rounded-full shadow-lg border border-white/20">
-                                LEVEL 1
-                            </div>
-                        </div>
-                        <h2 className="font-heading text-2xl font-bold text-white mt-4">Partner Status</h2>
-                        <p className="text-xs text-muted mt-1">Progression active. Your actions count.</p>
-                    </div>
+        // 3. MONETIZATION (UPDATED: Application Flow)
+        const MonetizationView = ({ onBack, onScroll, isHeaderVisible, profile, partnerStats, status, setStatus, setIsPartnerModalOpen, onRevenueClick }) => {
+            // Calculation Logic
+            const rqsTarget = 75;
+            const interactionsTarget = 500;
+            const streakTarget = 4;
 
-                    {/* Glowing Progress Bar */}
-                    <div className="glass-panel p-5 rounded-2xl">
-                        <div className="flex justify-between text-xs font-bold mb-3">
-                            <span className="text-white">Eligibility Progress</span>
-                            <span className="text-neon">60%</span>
-                        </div>
-                        <div className="h-2 w-full bg-white/5 rounded-full relative">
-                            <div className="h-full bg-neon rounded-full relative w-[60%] shadow-[0_0_12px_var(--neon)]">
-                                <div className="glow-tip"></div>
-                            </div>
-                        </div>
-                    </div>
+            const rqsProgress = Math.min((profile.rqs / rqsTarget) * 100, 100);
+            const intProgress = Math.min((partnerStats.interactionCount / interactionsTarget) * 100, 100);
+            const streakProgress = Math.min((partnerStats.streakWeeks / streakTarget) * 100, 100);
 
-                    {/* Detailed Criteria List */}
-                    <div className="space-y-4">
-                        <div className="flex justify-between items-center">
-                            <h3 className="text-xs font-bold text-muted uppercase tracking-wider px-1">Requirements</h3>
-                            <span className="text-[10px] text-neon font-bold">Apply Now</span>
-                        </div>
+            const totalProgress = Math.round((rqsProgress + intProgress + streakProgress) / 3);
 
-                        <div className="glass-panel p-4 rounded-xl flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-full bg-neon/10 flex items-center justify-center border border-neon/30">
-                                    <Icon icon="Check" size={14} className="text-neon" />
-                                </div>
-                                <div>
-                                    <p className="text-sm font-bold text-white">Reputation Score</p>
-                                    <p className="text-[10px] text-muted">Must be ≥ 75</p>
-                                </div>
-                            </div>
-                            <span className="text-xs font-bold text-white">Completed</span>
-                        </div>
+            const isEligible = profile.rqs >= rqsTarget &&
+                partnerStats.interactionCount >= interactionsTarget &&
+                partnerStats.streakWeeks >= streakTarget;
 
-                        <div className="glass-panel p-4 rounded-xl flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center border border-white/10">
-                                    <span className="text-xs font-bold text-white">2</span>
-                                </div>
-                                <div>
-                                    <p className="text-sm font-bold text-white">Monthly Interactions</p>
-                                    <p className="text-[10px] text-muted">Likes, comments, shares</p>
-                                </div>
-                            </div>
-                            <span className="text-xs font-bold text-white">840 / 1000</span>
-                        </div>
+            // TAG HELPER
+            const getStatusTag = (progress) => {
+                if (progress <= 50) return '(Setting up)';
+                if (progress <= 90) return '(Emerging)';
+                if (progress < 100) return '(So close)';
+                return '(Eligible)';
+            };
 
-                        <div className="glass-panel p-4 rounded-xl flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center border border-white/10">
-                                    <span className="text-xs font-bold text-white">3</span>
-                                </div>
-                                <div>
-                                    <p className="text-sm font-bold text-white">Verified Reviews</p>
-                                    <p className="text-[10px] text-muted">Authentic product posts</p>
-                                </div>
-                            </div>
-                            <span className="text-xs font-bold text-white">8 / 10</span>
-                        </div>
-                    </div>
-                </ViewWrapper>
-            </div>
-        );
+            const statusTag = getStatusTag(totalProgress);
 
-        // 4. ANALYTICS
-        const AnalyticsView = ({ onBack, onScroll }) => {
-            const [tab, setTab] = useState('overview');
+            const handleApplyClick = () => {
+                setIsPartnerModalOpen(true);
+            };
+
+            // IF APPROVED: Removed early return to show refined Welcome UI
+            // if (status === 'approved') {
+            //     return <EarningsView onBack={onBack} onScroll={onScroll} earnings={{ total: profile.total_earnings || 0, lastMonth: 0, logs: [], coupons: [], breakdown: [] }} />;
+            // }
+
+            const applyButton = (totalProgress === 100 && status === 'none') ? (
+                <button
+                    onClick={handleApplyClick}
+                    className="bg-brand-blue text-white text-[10px] font-black px-4 py-2 rounded-full shadow-[0_0_15px_rgba(47,139,255,0.4)] active:scale-95 transition-all"
+                >
+                    APPLY
+                </button>
+            ) : null;
 
             return (
                 <div className="flex flex-col h-full bg-[#020205] animate-slide-in">
-                    <SectionHeader title="Profile Insights" onBack={onBack} />
+                    <SectionHeader title="Partner Program" onBack={onBack} rightElement={applyButton} isVisible={isHeaderVisible} />
                     <ViewWrapper onScroll={onScroll}>
-                        {/* Tabs */}
-                        <div className="flex gap-2 mb-2">
-                            {['Overview', 'Content', 'Audience'].map(t => (
+                        {/* Status Header */}
+                        <div className="relative pt-4 pb-8 text-center">
+                            <div className="inline-block relative">
+                                <div className={`w-20 h-20 rounded-full border-2 flex items-center justify-center shadow-[0_0_30px_rgba(47,139,255,0.15)] ${(isEligible || status === 'approved') ? 'border-neon bg-neon/5' : 'border-white/10 bg-white/5'}`}>
+                                    <Icon icon="Zap" size={32} className={(isEligible || status === 'approved') ? "text-neon" : "text-muted"} />
+                                </div>
+
+                                {/* Status Badge */}
+                                <div className={`absolute -bottom-2 left-1/2 -translate-x-1/2 text-[9px] font-bold px-3 py-1 rounded-full shadow-lg border whitespace-nowrap ${status === 'approved' ? 'bg-accent-green text-black border-accent-green' :
+                                    status === 'pending' ? 'bg-amber-500 text-black border-amber-400' :
+                                        status === 'applied' ? 'bg-blue-500 text-white border-blue-400' :
+                                            status === 'rejected' ? 'bg-red-500 text-white border-red-400' :
+                                                isEligible ? 'bg-neon text-white border-white/20' :
+                                                    'bg-black text-muted border-white/10'
+                                    }`}>
+                                    {status === 'approved' ? 'APPROVED' :
+                                        status === 'pending' ? 'APPLICATION RECEIVED' :
+                                            status === 'applied' ? 'APPLICATION SENT' :
+                                                status === 'rejected' ? 'REJECTED' :
+                                                    status === 'none' ? statusTag.toUpperCase() : 'UNDER REVIEW'}
+                                </div>
+                            </div>
+
+                            <h2 className="font-heading text-2xl font-bold text-white mt-4">
+                                {status === 'approved' ? 'Partner Active' :
+                                    status === 'pending' ? 'Application Received' :
+                                        status === 'applied' ? 'Application Sent' :
+                                            status === 'rejected' ? 'Application Rejected' :
+                                                isEligible ? 'Eligible to Apply' : 'Partner Program'}
+                            </h2>
+                            <p className="text-xs text-muted mt-1">
+                                {status === 'approved' ? 'Your monetization is now active.' :
+                                    status === 'pending' ? 'We are reviewing your profile.' :
+                                        status === 'applied' ? 'Your request has been sent to admin.' :
+                                            status === 'rejected' ? 'Your application did not meet our criteria.' :
+                                                isEligible ? 'You have met all criteria!' : 'Progression active. Your actions count.'}
+                            </p>
+
+                            {/* Apply Button - Only at 100% and if not already applied/pending/approved */}
+                            {totalProgress === 100 && status === 'none' && (
                                 <button
-                                    key={t}
-                                    onClick={() => setTab(t.toLowerCase())}
-                                    className={`flex-1 py-2 text-[11px] font-bold rounded-lg transition-colors ${tab === t.toLowerCase() ? 'bg-white text-black' : 'bg-white/5 text-muted'}`}
+                                    onClick={handleApplyClick}
+                                    className="mt-6 px-10 py-3.5 bg-neon text-white font-bold rounded-xl shadow-[0_0_20px_rgba(47,139,255,0.4)] active:scale-95 transition-transform text-sm whitespace-nowrap"
                                 >
-                                    {t}
+                                    Apply for Partner Program
                                 </button>
-                            ))}
+                            )}
                         </div>
 
-                        <div className="grid grid-cols-2 gap-3">
-                            <div className="glass-panel p-4 rounded-xl">
-                                <p className="text-[10px] text-muted uppercase font-bold mb-1">Total Reach</p>
-                                <p className="font-heading text-xl font-bold text-white">45.2K</p>
-                                <p className="text-[9px] text-neon mt-1 flex items-center gap-1">
-                                    <span className="bg-neon/10 px-1 rounded">▲ 12%</span>
+                        {/* Acknowledgement Card if Pending */}
+                        {status === 'pending' && (
+                            <div className="mb-6 animate-slide-in">
+                                <div className="glass-panel p-6 rounded-2xl border-neon/20 bg-neon/5 relative overflow-hidden">
+                                    <div className="absolute top-0 right-0 p-4 opacity-10">
+                                        <Icon icon="Shield" size={64} />
+                                    </div>
+                                    <h3 className="text-white font-heading font-bold text-lg mb-2">Review in Progress</h3>
+                                    <p className="text-xs text-muted leading-relaxed mb-4">
+                                        "Thank you for your application. Our team is currently verifying your identity and bank details to ensure a secure partnership. You will be notified once the review is complete."
+                                    </p>
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-[10px] font-bold text-white">AK</div>
+                                        <div>
+                                            <p className="text-[10px] font-bold text-white">Aditya Kumar</p>
+                                            <p className="text-[8px] text-muted">Founder, PlusOpinion</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Welcome Card if Approved */}
+                        {status === 'approved' && (
+                            <div className="mb-6 animate-slide-in">
+                                <div className="glass-panel p-6 rounded-2xl border-neon/20 bg-neon/5 relative overflow-hidden shadow-[0_0_40px_rgba(47,139,255,0.05)]">
+                                    <div className="absolute top-0 right-0 p-4 opacity-10 text-neon">
+                                        <Icon icon="CheckCircle" size={64} />
+                                    </div>
+                                    <h3 className="text-white font-heading font-bold text-lg mb-2">Welcome to the Program</h3>
+                                    <p className="text-xs text-muted leading-relaxed mb-4">
+                                        "Congratulations! Your application has been approved. We are excited to have you as a verified partner. Your contributions are now part of our official creator economy, and your earnings and professional dashboard are fully activated."
+                                    </p>
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-8 h-8 rounded-full bg-neon/20 flex items-center justify-center text-[10px] font-bold text-neon border border-neon/20 shadow-inner">AK</div>
+                                        <div>
+                                            <p className="text-[10px] font-bold text-white">Aditya Kumar</p>
+                                            <p className="text-[8px] text-muted">Founder, PlusOpinion</p>
+                                        </div>
+                                    </div>
+
+                                    <button
+                                        onClick={onRevenueClick}
+                                        className="w-full mt-6 py-3 bg-neon text-white text-xs font-black rounded-xl hover:shadow-[0_0_20px_rgba(47,139,255,0.3)] transition-all flex items-center justify-center gap-2"
+                                    >
+                                        <Icon icon="Wallet" size={14} />
+                                        OPEN REVENUE STUDIO
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Rejection Card if Rejected */}
+                        {status === 'rejected' && (
+                            <div className="mb-6 animate-slide-in">
+                                <div className="glass-panel p-6 rounded-2xl border-red-500/20 bg-red-500/5 relative overflow-hidden">
+                                    <div className="absolute top-0 right-0 p-4 opacity-10 text-red-500">
+                                        <Icon icon="AlertTriangle" size={64} />
+                                    </div>
+                                    <h3 className="text-white font-heading font-bold text-lg mb-2">Application Update</h3>
+                                    <p className="text-xs text-red-200/60 leading-relaxed mb-4">
+                                        Unfortunately, your partner application was not approved at this time. This is often due to mismatched identity documents or incomplete bank verification.
+                                    </p>
+                                    <button
+                                        onClick={() => setStatus('none')}
+                                        className="w-full py-3 bg-white/5 rounded-xl text-white text-xs font-bold hover:bg-white/10 transition-colors"
+                                    >
+                                        Re-apply with Correct Details
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Progress Bars (Keep showing them even if pending, for confirmation) */}
+                        <div className="glass-panel p-5 rounded-2xl">
+                            <div className="flex justify-between text-xs font-bold mb-3">
+                                <span className="text-white">Eligibility Progress</span>
+                                <span className="text-neon">{totalProgress}%</span>
+                            </div>
+                            <div className="h-2 w-full bg-white/5 rounded-full relative">
+                                <div className="h-full bg-neon rounded-full relative shadow-[0_0_15px_var(--neon)] transition-all duration-1000" style={{ width: `${totalProgress}%` }}>
+                                    <div className="glow-tip"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Detailed Criteria List */}
+                        <div className="space-y-4 mt-4">
+                            <div className="flex justify-between items-center">
+                                <h3 className="text-xs font-bold text-muted uppercase tracking-wider px-1">Requirements</h3>
+                            </div>
+
+                            {/* RQS Req */}
+                            <div className="glass-panel p-4 rounded-xl flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center border ${profile.rqs >= rqsTarget ? 'bg-neon/10 border-neon/30' : 'bg-white/5 border-white/10'}`}>
+                                        <Icon icon={profile.rqs >= rqsTarget ? "Check" : "Activity"} size={14} className={profile.rqs >= rqsTarget ? "text-neon" : "text-muted"} />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-bold text-white">Reputation Score</p>
+                                        <p className="text-[10px] text-muted">Must be ≥ {rqsTarget}</p>
+                                    </div>
+                                </div>
+                                <span className={`text-xs font-bold ${profile.rqs >= rqsTarget ? "text-neon" : "text-white"}`}>{profile.rqs}</span>
+                            </div>
+
+                            {/* Interactions Req */}
+                            <div className="glass-panel p-4 rounded-xl flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center border ${partnerStats.interactionCount >= interactionsTarget ? 'bg-neon/10 border-neon/30' : 'bg-white/5 border-white/10'}`}>
+                                        <span className={`text-xs font-bold ${partnerStats.interactionCount >= interactionsTarget ? "text-neon" : "text-white"}`}>2</span>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-bold text-white">Community Interactions</p>
+                                        <p className="text-[10px] text-muted">Likes, comments, shares</p>
+                                    </div>
+                                </div>
+                                <span className="text-xs font-bold text-white">{partnerStats.interactionCount} / {interactionsTarget}</span>
+                            </div>
+
+                            {/* Streak Req */}
+                            <div className="glass-panel p-4 rounded-xl flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center border ${partnerStats.streakWeeks >= streakTarget ? 'bg-neon/10 border-neon/30' : 'bg-white/5 border-white/10'}`}>
+                                        <span className={`text-xs font-bold ${partnerStats.streakWeeks >= streakTarget ? "text-neon" : "text-white"}`}>4</span>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-bold text-white">Active Streak</p>
+                                        <p className="text-[10px] text-muted">Consecutive weeks</p>
+                                    </div>
+                                </div>
+                                <span className="text-xs font-bold text-white">{partnerStats.streakWeeks} / {streakTarget}</span>
+                            </div>
+                        </div>
+                    </ViewWrapper>
+                </div>
+            );
+        };
+
+
+        // 4. ANALYTICS
+        const AnalyticsView = ({ onBack, onScroll, isHeaderVisible }) => {
+            return (
+                <div className="flex flex-col h-full bg-[#020205] animate-slide-in">
+                    <SectionHeader title="Profile Insights" onBack={onBack} isVisible={isHeaderVisible} />
+                    <ViewWrapper onScroll={onScroll}>
+                        <div className="flex flex-col items-center justify-center py-20 px-6 text-center space-y-6">
+                            <div className="relative">
+                                <div className="absolute inset-0 bg-neon/20 blur-3xl rounded-full"></div>
+                                <div className="relative w-24 h-24 bg-white/5 rounded-2xl flex items-center justify-center border border-white/10 shadow-2xl backdrop-blur-sm">
+                                    <Icon icon="BarChart2" size={40} className="text-white/80" />
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <h2 className="font-heading text-2xl font-bold text-white">Analytics Hub</h2>
+                                <p className="text-sm text-muted max-w-[250px] mx-auto leading-relaxed">
+                                    Deep insights into your audience and content performance are being baked.
                                 </p>
                             </div>
-                            <div className="glass-panel p-4 rounded-xl">
-                                <p className="text-[10px] text-muted uppercase font-bold mb-1">Engagement Rate</p>
-                                <p className="font-heading text-xl font-bold text-white">8.4%</p>
-                                <p className="text-[9px] text-neon mt-1 flex items-center gap-1">
-                                    <span className="bg-neon/10 px-1 rounded">▲ 2%</span>
-                                </p>
-                            </div>
-                        </div>
 
-                        <div className="glass-panel p-5 rounded-xl">
-                            <div className="flex justify-between items-center mb-6">
-                                <h3 className="text-sm font-bold text-white">Activity</h3>
-                                <div className="flex gap-2 text-[10px] font-bold">
-                                    <span className="text-white bg-white/10 px-2 py-1 rounded">7D</span>
-                                    <span className="text-muted px-2 py-1">30D</span>
-                                </div>
-                            </div>
-                            <div className="h-32 flex items-end justify-between gap-2 px-2">
-                                {[40, 65, 45, 80, 55, 90, 70].map((h, i) => (
-                                    <div key={i} className="w-full bg-white/5 rounded-t relative group hover:bg-white/10 transition-colors">
-                                        <div className="absolute bottom-0 w-full bg-gradient-to-t from-neon/30 to-neon rounded-t" style={{ height: `${h}%` }}></div>
-                                    </div>
-                                ))}
-                            </div>
-                            <div className="flex justify-between mt-3 text-[9px] text-muted font-mono uppercase">
-                                <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
-                            </div>
-                        </div>
-
-                        {/* Additional Metrics */}
-                        <div className="space-y-3">
-                            <div className="glass-panel p-4 rounded-xl flex justify-between items-center">
-                                <div className="flex items-center gap-3">
-                                    <Icon icon="Clock" size={18} className="text-white" />
-                                    <div>
-                                        <p className="text-xs font-bold text-white">Avg. View Duration</p>
-                                        <p className="text-[10px] text-muted">Video content</p>
-                                    </div>
-                                </div>
-                                <span className="text-sm font-bold text-white">1m 42s</span>
-                            </div>
-                            <div className="glass-panel p-4 rounded-xl flex justify-between items-center">
-                                <div className="flex items-center gap-3">
-                                    <Icon icon="Users" size={18} className="text-white" />
-                                    <div>
-                                        <p className="text-xs font-bold text-white">Returning Viewers</p>
-                                        <p className="text-[10px] text-muted">Loyalty metric</p>
-                                    </div>
-                                </div>
-                                <span className="text-sm font-bold text-white">1.2K</span>
+                            <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 rounded-full border border-white/10">
+                                <span className="w-2 h-2 rounded-full bg-neon animate-pulse"></span>
+                                <span className="text-[10px] font-bold text-white uppercase tracking-widest">Coming Soon</span>
                             </div>
                         </div>
                     </ViewWrapper>
@@ -845,8 +1074,12 @@
         };
 
         // 5. BRAND INTERACTIONS
-        const BrandInteractionView = ({ onBack, onScroll }) => {
-            const brands = RAW_POSTS.filter(p => p.seenBy);
+        const BrandInteractionView = ({ onBack, onScroll, isHeaderVisible, posts = [], onShare }) => {
+            // Filter posts that have 'seenBy' (which is product_name or we need a field indicating brand saw it)
+            // For now, let's assume all 'myPosts' with a valid product_name are valid candidates, 
+            // OR strictly if we had 'seen_by' field from DB. 
+            // Since API doesn't return 'seenBy' explicitly yet (it returns product_name), let's use that for demo.
+            const brands = posts.filter(p => p.product_name); // Assuming product_name implies interaction/tag
 
             const handleImgError = (e, name) => {
                 const parent = e.target.parentNode;
@@ -873,41 +1106,57 @@
 
             return (
                 <div className="flex flex-col h-full bg-[#020205] animate-slide-in">
-                    <SectionHeader title="Brand Interactions" onBack={onBack} />
+                    <SectionHeader title="Brand Interactions" onBack={onBack} isVisible={isHeaderVisible} />
                     <ViewWrapper onScroll={onScroll}>
                         <p className="text-xs text-muted/60 mb-6 px-2 leading-relaxed">
                             Official acknowledgments from brands. Verified interactions boost your partner status.
                         </p>
                         <div className="space-y-3">
-                            {brands.map((item, i) => {
-                                const logoUrl = BRAND_LOGOS[item.seenBy] || "https://cdn.simpleicons.org/adirexx";
+                            {brands.length === 0 ? (
+                                <div className="text-center text-muted/50 py-10 font-heading tracking-widest">NO INTERACTIONS YET</div>
+                            ) : brands.map((item, i) => {
+                                const brandName = item.product_name;
+                                const logoUrl = BRAND_LOGOS[brandName] || "https://cdn.simpleicons.org/adirexx";
                                 return (
-                                    <div key={i} className="glass-panel p-4 rounded-xl flex items-center justify-between group active:scale-[0.99] transition-transform animate-slide-in" style={{ animationDelay: `${i * 50}ms` }}>
+                                    <div key={item.id || i} className="glass-panel p-4 rounded-xl flex items-center justify-between group active:scale-[0.99] transition-transform animate-slide-in" style={{ animationDelay: `${i * 50}ms` }}>
                                         <div className="flex items-center gap-4">
                                             <div className="brand-logo-container">
                                                 <img
-                                                    src={BRAND_LOGOS[item.seenBy]}
-                                                    alt={item.seenBy}
+                                                    src={BRAND_LOGOS[brandName] || logoUrl}
+                                                    alt={brandName}
                                                     className="brand-logo-img"
-                                                    onError={(e) => handleImgError(e, item.seenBy)}
+                                                    onError={(e) => handleImgError(e, brandName)}
                                                 />
                                             </div>
                                             <div>
-                                                <h4 className="text-sm font-bold text-white mb-2">{item.seenBy}</h4>
+                                                <h4 className="text-sm font-bold text-white mb-2">{brandName}</h4>
                                                 <div className="brand-pill">
                                                     <div className="brand-pill-dot"></div>
-                                                    <span className="brand-pill-text">Seen by {item.seenBy}</span>
+                                                    <span className="brand-pill-text">Seen by {brandName}</span>
                                                 </div>
                                             </div>
                                         </div>
 
                                         <div className="flex flex-col items-end gap-2">
-                                            <div className="text-[10px] text-muted font-medium bg-white/5 px-2 py-1 rounded border border-white/5">
-                                                View
-                                            </div>
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    if (onShare) onShare({
+                                                        id: item.id,
+                                                        username: userData.name, // Use current user's name
+                                                        name: userData.name,
+                                                        text: item.review_text,
+                                                        avatar: item.images && item.images[0] ? item.images[0] : null // Use first image as avatar/media for share preview
+                                                    });
+                                                }}
+                                                className="text-[10px] text-white font-bold bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg border border-white/5 transition-colors flex items-center gap-1"
+                                            >
+                                                <Icon icon="Share" size={10} />
+                                                Share
+                                            </button>
                                             <div className="flex items-center gap-1 text-[9px] text-muted/50 font-medium">
                                                 <Icon icon="Clock" size={10} />
-                                                <span>{item.time} ago</span>
+                                                <span>{new Date(item.created_at).toLocaleDateString()}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -920,113 +1169,742 @@
         };
 
         // 6. HUBS (Expanded)
-        const SecurityView = ({ onBack, onScroll }) => (
-            <div className="flex flex-col h-full bg-[#020205] animate-slide-in">
-                <SectionHeader title="Security Center" onBack={onBack} />
-                <ViewWrapper onScroll={onScroll}>
-                    <div className="glass-panel p-6 rounded-2xl text-center mb-4">
-                        <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4 border border-white/10">
-                            <Icon icon="Shield" size={28} className="text-white" />
-                        </div>
-                        <h2 className="font-heading text-xl font-bold text-white">Protected</h2>
-                        <p className="text-xs text-muted mt-2">Account status: Secure</p>
-                    </div>
-                    <div className="space-y-2">
-                        <div className="glass-panel p-4 rounded-xl flex justify-between items-center">
-                            <span className="text-sm text-white font-medium">Password Manager</span>
-                            <span className="text-[10px] text-neon">Active</span>
-                        </div>
-                        <div className="glass-panel p-4 rounded-xl flex justify-between items-center">
-                            <span className="text-sm text-white font-medium">Login Activity</span>
-                            <span className="text-[10px] text-muted">2 Devices</span>
-                        </div>
-                        <div className="glass-panel p-4 rounded-xl flex justify-between items-center">
-                            <span className="text-sm text-white font-medium">Data Export</span>
-                            <span className="text-[10px] text-neon">Request</span>
-                        </div>
-                        <div className="glass-panel p-4 rounded-xl flex justify-between items-center">
-                            <span className="text-sm text-white font-medium">2FA</span>
-                            <span className="text-[10px] text-neon">Enabled</span>
-                        </div>
-                    </div>
-                </ViewWrapper>
-            </div>
-        );
+        const SecurityView = ({ onBack, onScroll, isHeaderVisible }) => {
+            const handlePasswordReset = () => {
+                // Redirect to the dedicated change password page for authenticated users
+                window.location.href = 'change-password.html';
+            };
 
-        const SupportView = ({ onBack, onScroll }) => (
+            return (
+                <div className="flex flex-col h-full bg-[#020205] animate-slide-in">
+                    <SectionHeader title="Security Center" onBack={onBack} isVisible={isHeaderVisible} />
+                    <ViewWrapper onScroll={onScroll}>
+                        <div className="glass-panel p-6 rounded-2xl text-center mb-4">
+                            <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4 border border-white/10">
+                                <Icon icon="Shield" size={28} className="text-white" />
+                            </div>
+                            <h2 className="font-heading text-xl font-bold text-white">Protected</h2>
+                            <p className="text-xs text-muted mt-2">Account status: Secure</p>
+                        </div>
+                        <div className="space-y-2">
+                            <button
+                                onClick={handlePasswordReset}
+                                className="w-full glass-panel p-4 rounded-xl flex justify-between items-center hover:bg-white/5 transition-colors group active:scale-[0.98]"
+                            >
+                                <span className="text-sm text-white font-medium group-hover:text-neon transition-colors">Password Manager</span>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-[10px] text-muted">Change</span>
+                                    <Icon icon="ChevronRight" size={14} className="text-muted" />
+                                </div>
+                            </button>
+                            <div className="glass-panel p-4 rounded-xl flex justify-between items-center">
+                                <span className="text-sm text-white font-medium">Login Activity</span>
+                                <span className="text-[10px] text-muted">Current Device</span>
+                            </div>
+                        </div>
+                    </ViewWrapper>
+                </div>
+            );
+        };
+
+        const SupportView = ({ onBack, onScroll, isHeaderVisible }) => (
             <div className="flex flex-col h-full bg-[#020205] animate-slide-in">
-                <SectionHeader title="Help & Support" onBack={onBack} />
+                <SectionHeader title="Help & Support" onBack={onBack} isVisible={isHeaderVisible} />
                 <ViewWrapper onScroll={onScroll}>
                     <div className="space-y-3">
-                        <div className="glass-panel p-4 rounded-xl flex items-center gap-4">
-                            <Icon icon="Wallet" size={20} className="text-white" />
+                        <a
+                            href="mailto:payouts@plusopinion.com?subject=Withdrawal Inquiry"
+                            className="w-full glass-panel p-4 rounded-xl flex items-center gap-4 hover:border-neon/30 transition-all active:scale-[0.98] text-left group block"
+                        >
+                            <div className="p-2 rounded-lg bg-white/5 group-hover:bg-neon/10 transition-colors">
+                                <Icon icon="Wallet" size={20} className="text-white group-hover:text-neon" />
+                            </div>
                             <div className="flex-1">
-                                <h4 className="text-sm font-bold text-white">Withdrawals</h4>
+                                <h4 className="text-sm font-bold text-white group-hover:text-neon transition-colors">Withdrawals</h4>
                                 <p className="text-[10px] text-muted">Payment status & help</p>
                             </div>
-                        </div>
-                        <div className="glass-panel p-4 rounded-xl flex items-center gap-4">
-                            <Icon icon="Mail" size={20} className="text-white" />
+                            <Icon icon="ChevronRight" size={16} className="text-muted/50 group-hover:text-neon transition-colors" />
+                        </a>
+
+                        <a
+                            href="mailto:support@plusopinion.com?subject=Ticket History Request"
+                            className="w-full glass-panel p-4 rounded-xl flex items-center gap-4 hover:border-neon/30 transition-all active:scale-[0.98] text-left group block"
+                        >
+                            <div className="p-2 rounded-lg bg-white/5 group-hover:bg-neon/10 transition-colors">
+                                <Icon icon="Mail" size={20} className="text-white group-hover:text-neon" />
+                            </div>
                             <div className="flex-1">
-                                <h4 className="text-sm font-bold text-white">Ticket History</h4>
+                                <h4 className="text-sm font-bold text-white group-hover:text-neon transition-colors">Ticket History</h4>
                                 <p className="text-[10px] text-muted">View past inquiries</p>
                             </div>
-                        </div>
-                        <div className="glass-panel p-4 rounded-xl flex items-center gap-4">
-                            <Icon icon="Activity" size={20} className="text-white" />
+                            <Icon icon="ChevronRight" size={16} className="text-muted/50 group-hover:text-neon transition-colors" />
+                        </a>
+
+                        <a
+                            href="https://wa.me/918700591393"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="w-full glass-panel p-4 rounded-xl flex items-center gap-4 hover:border-accent-green/30 transition-all active:scale-[0.98] text-left group block"
+                        >
+                            <div className="p-2 rounded-lg bg-white/5 group-hover:bg-accent-green/10 transition-colors">
+                                <Icon icon="Activity" size={20} className="text-white group-hover:text-accent-green" />
+                            </div>
                             <div className="flex-1">
-                                <h4 className="text-sm font-bold text-white">Live Chat</h4>
+                                <h4 className="text-sm font-bold text-white group-hover:text-accent-green transition-colors">Live Chat</h4>
                                 <p className="text-[10px] text-accent-green">Agents Online</p>
                             </div>
-                        </div>
-                        <button className="w-full mt-4 bg-white text-black py-3 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-gray-200 transition-colors">
-                            Start New Ticket
-                        </button>
+                            <Icon icon="ChevronRight" size={16} className="text-muted/50 group-hover:text-accent-green transition-colors" />
+                        </a>
+
+                        <a
+                            href="mailto:founder@plusopinion.com?subject=Critical Issue Report"
+                            className="w-full glass-panel p-4 rounded-xl flex items-center gap-4 hover:border-danger/30 transition-all active:scale-[0.98] text-left group mt-4 border-danger/10 block"
+                        >
+                            <div className="p-2 rounded-lg bg-danger/5 group-hover:bg-danger/10 transition-colors">
+                                <Icon icon="Shield" size={20} className="text-danger" />
+                            </div>
+                            <div className="flex-1">
+                                <h4 className="text-sm font-bold text-white group-hover:text-danger transition-colors">Report Issue</h4>
+                                <p className="text-[10px] text-muted">Escalate critical bugs</p>
+                            </div>
+                            <Icon icon="ChevronRight" size={16} className="text-muted/50 group-hover:text-danger transition-colors" />
+                        </a>
                     </div>
                 </ViewWrapper>
             </div>
         );
 
+        // --- PARTNER APPLICATION MODAL ---
+        const PartnerApplicationModal = ({ isOpen, onClose, onSubmit }) => {
+            if (!isOpen) return null;
+            const [step, setStep] = useState(1);
+            const [isSubmitting, setIsSubmitting] = useState(false);
+            const [selectedFile, setSelectedFile] = useState(null);
+            const fileInputRef = useRef(null);
+            const [formData, setFormData] = useState({
+                legal_name: '',
+                permanent_email: '',
+                id_number: '',
+                bank_account_no: '',
+                bank_ifsc: '',
+                bank_holder_name: '',
+                upi_id: ''
+            });
+
+            const updateField = (field, val) => setFormData(prev => ({ ...prev, [field]: val }));
+
+            const handleNext = () => setStep(s => s + 1);
+            const handleBack = () => setStep(s => s - 1);
+
+            const handleSubmit = async () => {
+                try {
+                    setIsSubmitting(true);
+                    let id_document_url = 'none';
+
+                    if (selectedFile) {
+                        const user = await window.getCurrentUser();
+                        const fileExt = selectedFile.name.split('.').pop();
+                        const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+                        const filePath = `id-documents/${fileName}`;
+
+                        const { error: uploadError } = await window.supabase.storage
+                            .from('partner-id-docs')
+                            .upload(filePath, selectedFile);
+
+                        if (uploadError) throw uploadError;
+
+                        const { data: { publicUrl } } = window.supabase.storage
+                            .from('partner-id-docs')
+                            .getPublicUrl(filePath);
+
+                        id_document_url = publicUrl;
+                    }
+
+                    await onSubmit({ ...formData, id_document_url });
+                    onClose();
+                } catch (err) {
+                    console.error('Submission failed:', err);
+                    window.dispatchEvent(new CustomEvent('toast', {
+                        detail: { message: 'Upload failed: ' + (err.message || 'Error'), icon: 'AlertTriangle' }
+                    }));
+                } finally {
+                    setIsSubmitting(false);
+                }
+            };
+
+            const renderStep = () => {
+                switch (step) {
+                    case 1:
+                        return (
+                            <div className="space-y-4 animate-slide-in">
+                                <h4 className="text-white font-bold text-sm mb-4">Step 1: General Information</h4>
+                                <div>
+                                    <label className="text-[10px] text-muted uppercase font-bold mb-1.5 block">Legal Full Name</label>
+                                    <input
+                                        type="text"
+                                        value={formData.legal_name}
+                                        onChange={e => updateField('legal_name', e.target.value)}
+                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-neon/50"
+                                        placeholder="As per Government ID"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-[10px] text-muted uppercase font-bold mb-1.5 block">Permanent Email</label>
+                                    <input
+                                        type="email"
+                                        value={formData.permanent_email}
+                                        onChange={e => updateField('permanent_email', e.target.value)}
+                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-neon/50"
+                                        placeholder="example@email.com"
+                                    />
+                                </div>
+                                <button onClick={handleNext} className="w-full py-3.5 bg-neon rounded-xl text-white font-bold text-sm mt-4">Next Step</button>
+                            </div>
+                        );
+                    case 2:
+                        return (
+                            <div className="space-y-4 animate-slide-in">
+                                <h4 className="text-white font-bold text-sm mb-4">Step 2: Identity Verification</h4>
+                                <div>
+                                    <label className="text-[10px] text-muted uppercase font-bold mb-1.5 block">Government ID Number</label>
+                                    <input
+                                        type="text"
+                                        value={formData.id_number}
+                                        onChange={e => updateField('id_number', e.target.value)}
+                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-neon/50"
+                                        placeholder="PAN / Passport / Voter ID"
+                                    />
+                                </div>
+                                <div
+                                    className={`p-6 border-2 border-dashed rounded-2xl text-center bg-white/5 transition-colors cursor-pointer ${selectedFile ? 'border-neon/50' : 'border-white/10'}`}
+                                    onClick={() => fileInputRef.current.click()}
+                                >
+                                    <input
+                                        type="file"
+                                        ref={fileInputRef}
+                                        className="hidden"
+                                        onChange={(e) => setSelectedFile(e.target.files[0])}
+                                        accept=".jpg,.jpeg,.png,.pdf"
+                                    />
+                                    <Icon icon={selectedFile ? "FileCheck" : "Shield"} size={32} className={`${selectedFile ? 'text-neon' : 'text-muted'} mx-auto mb-3`} />
+                                    <p className="text-[11px] text-muted">
+                                        {selectedFile ? (
+                                            <span className="text-white font-bold">{selectedFile.name} ({(selectedFile.size / 1024).toFixed(1)} KB)</span>
+                                        ) : (
+                                            <>Upload Photo of ID Document<br />(Max 5MB • JPG, PNG, PDF)</>
+                                        )}
+                                    </p>
+                                    <button className="mt-4 px-6 py-2 bg-white/10 rounded-lg text-xs font-bold text-white pointer-events-none">
+                                        {selectedFile ? "Change File" : "Select File"}
+                                    </button>
+                                </div>
+                                <div className="flex gap-3">
+                                    <button onClick={handleBack} className="flex-1 py-3.5 bg-white/5 rounded-xl text-white font-bold text-sm">Back</button>
+                                    <button onClick={handleNext} className="flex-1 py-3.5 bg-neon rounded-xl text-white font-bold text-sm">Next Step</button>
+                                </div>
+                            </div>
+                        );
+                    case 3:
+                        return (
+                            <div className="space-y-4 animate-slide-in">
+                                <h4 className="text-white font-bold text-sm mb-4">Step 3: Payout Details</h4>
+                                <div>
+                                    <label className="text-[10px] text-muted uppercase font-bold mb-1.5 block">Bank Account Holder Name</label>
+                                    <input
+                                        type="text"
+                                        value={formData.bank_holder_name}
+                                        onChange={e => updateField('bank_holder_name', e.target.value)}
+                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-neon/50"
+                                        placeholder="Full Name as per Bank"
+                                    />
+                                </div>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="text-[10px] text-muted uppercase font-bold mb-1.5 block">Account Number</label>
+                                        <input
+                                            type="text"
+                                            value={formData.bank_account_no}
+                                            onChange={e => updateField('bank_account_no', e.target.value)}
+                                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-neon/50"
+                                            placeholder="XXXX XXXX XXXX"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] text-muted uppercase font-bold mb-1.5 block">IFSC Code</label>
+                                        <input
+                                            type="text"
+                                            value={formData.bank_ifsc}
+                                            onChange={e => updateField('bank_ifsc', e.target.value)}
+                                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-neon/50"
+                                            placeholder="SBIN000XXXX"
+                                        />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="text-[10px] text-muted uppercase font-bold mb-1.5 block">UPI ID (Optional)</label>
+                                    <input
+                                        type="text"
+                                        value={formData.upi_id}
+                                        onChange={e => updateField('upi_id', e.target.value)}
+                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-neon/50"
+                                        placeholder="username@upi"
+                                    />
+                                </div>
+                                <div className="flex gap-3 mt-4">
+                                    <button onClick={handleBack} className="flex-1 py-3.5 bg-white/5 rounded-xl text-white font-bold text-sm">Back</button>
+                                    <button
+                                        onClick={handleSubmit}
+                                        disabled={isSubmitting}
+                                        className="flex-1 py-3.5 bg-accent-green text-black font-bold text-sm rounded-xl"
+                                    >
+                                        {isSubmitting ? 'Submitting...' : 'Complete Application'}
+                                    </button>
+                                </div>
+                            </div>
+                        );
+                }
+            };
+
+            return (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-black/80 backdrop-blur-md animate-fade-in" onClick={onClose} />
+                    <div className="relative w-full max-w-md bg-[#0A0F1D] border border-white/10 rounded-3xl p-6 shadow-2xl animate-pop overflow-hidden">
+                        <div className="flex justify-between items-center mb-6">
+                            <div>
+                                <h3 className="text-lg font-heading font-bold text-white">Partner Application</h3>
+                                <p className="text-[10px] text-muted uppercase font-medium">Progress: {step}/3</p>
+                            </div>
+                            <button onClick={onClose} className="p-2 bg-white/5 rounded-full text-muted hover:text-white transition-colors">
+                                <Icon icon="X" size={18} />
+                            </button>
+                        </div>
+
+                        {renderStep()}
+
+                        {/* Progress Bar */}
+                        <div className="h-1 w-full bg-white/5 rounded-full mt-8 overflow-hidden">
+                            <div className="h-full bg-neon transition-all duration-300" style={{ width: `${(step / 3) * 100}%` }} />
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- SHARE MODAL ---
+        const ShareModal = ({ isOpen, onClose, post }) => {
+            if (!isOpen || !post) return null;
+
+            const shareUrl = `https://plusopinion.com/post/${post.id}`;
+            const shareText = `Check out this interaction by @${post.username}`;
+
+            const handleCopy = async () => {
+                try {
+                    await navigator.clipboard.writeText(`${shareText} ${shareUrl}`);
+                    window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Link copied to clipboard', icon: 'Link', isSuccess: true } }));
+                    if (window.trackShare) window.trackShare(post.id);
+                    onClose();
+                } catch (err) { console.error(err); }
+            };
+
+            const handleNativeShare = async () => {
+                if (navigator.share) {
+                    try {
+                        await navigator.share({ title: 'PlusOpinion', text: shareText, url: shareUrl });
+                        if (window.trackShare) window.trackShare(post.id);
+                        onClose();
+                    } catch (err) { }
+                } else {
+                    window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Sharing not supported', icon: 'AlertTriangle' } }));
+                }
+            };
+
+            return (
+                <div className="fixed inset-0 z-[60] flex items-end justify-center sm:px-4">
+                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={onClose}></div>
+                    <div className="relative w-full sm:max-w-md bg-[#121212] border-t sm:border border-white/10 rounded-t-3xl p-6 pt-4 shadow-2xl animate-slide-up overflow-hidden">
+                        {/* Drag Bar */}
+                        <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-6 shrink-0"></div>
+
+                        <div className="flex justify-between items-center mb-6">
+                            <span className="text-white font-heading font-bold text-lg">Share Interaction</span>
+                            <button onClick={onClose} className="p-2 bg-white/5 rounded-full text-white/60 hover:text-white transition-colors"><Icon icon="X" size={20} /></button>
+                        </div>
+
+                        {/* Post Preview Card */}
+                        <div className="bg-[#1E1E1E] rounded-xl p-4 mb-6 border border-white/5 relative overflow-hidden group">
+                            <div className="absolute top-0 right-0 w-24 h-24 bg-neon/5 blur-3xl rounded-full -translate-y-1/2 translate-x-1/2"></div>
+                            <div className="flex items-center gap-3 mb-3">
+                                <img
+                                    src={post.avatar || DEFAULT_AVATAR}
+                                    className="w-8 h-8 rounded-full object-cover cursor-pointer active:scale-95 transition-transform"
+                                    onClick={() => { window.location.href = `PUBLIC POV PROFILE.HTML?id=${post.user_id || 'me'}`; }}
+                                />
+                                <div>
+                                    <div
+                                        className="text-white text-sm font-bold cursor-pointer hover:text-neon transition-colors"
+                                        onClick={() => { window.location.href = `PUBLIC POV PROFILE.HTML?id=${post.user_id || 'me'}`; }}
+                                    >
+                                        {post.name}
+                                    </div>
+                                    <div className="text-white/40 text-xs text-muted">@{post.username}</div>
+                                </div>
+                            </div>
+                            <div className="text-gray-300 text-sm mb-3 line-clamp-3 leading-relaxed font-light">
+                                {post.text}
+                            </div>
+                            <div className="mt-3 flex items-center gap-2 text-[10px] text-neon uppercase tracking-wider font-bold">
+                                <Icon icon="Link" size={12} />
+                                plusopinion.com/post/{post.id.substring(0, 8)}...
+                            </div>
+                        </div>
+
+                        {/* Share Grid */}
+                        <div className="grid grid-cols-4 gap-4 mb-4">
+                            <button onClick={handleCopy} className="flex flex-col items-center gap-2 group">
+                                <div className="w-14 h-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-white/10 group-hover:scale-105 transition-all">
+                                    <Icon icon="Link" size={24} className="text-white" />
+                                </div>
+                                <span className="text-xs text-muted">Copy Link</span>
+                            </button>
+                            <button onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(shareText + ' ' + shareUrl)}`, '_blank')} className="flex flex-col items-center gap-2 group">
+                                <div className="w-14 h-14 rounded-full bg-[#25D366]/20 border border-[#25D366]/20 flex items-center justify-center group-hover:bg-[#25D366]/30 group-hover:scale-105 transition-all">
+                                    <Icon icon="MessageCircle" size={24} className="text-[#25D366]" />
+                                </div>
+                                <span className="text-xs text-muted">WhatsApp</span>
+                            </button>
+                            <button onClick={() => window.open(`http://instagram.com/`, '_blank')} className="flex flex-col items-center gap-2 group">
+                                <div className="w-14 h-14 rounded-full bg-pink-500/20 border border-pink-500/20 flex items-center justify-center group-hover:bg-pink-500/30 group-hover:scale-105 transition-all">
+                                    <Icon icon="Instagram" size={24} className="text-pink-500" />
+                                </div>
+                                <span className="text-xs text-muted">Instagram</span>
+                            </button>
+                            <button onClick={handleNativeShare} className="flex flex-col items-center gap-2 group">
+                                <div className="w-14 h-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-white/10 group-hover:scale-105 transition-all">
+                                    <Icon icon="Share" size={24} className="text-white" />
+                                </div>
+                                <span className="text-xs text-muted">More</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
         // --- MAIN APP ---
-        const DashboardCard = ({ icon, title, value, subtext, onClick, color = "text-white", delay = "0s" }) => (
-            <div onClick={onClick} className="glass-panel rounded-2xl p-5 relative overflow-hidden active:scale-[0.98] transition-all cursor-pointer group animate-slide-in" style={{ animationDelay: delay }}>
+        // --- TOAST COMPONENT ---
+        const Toast = ({ message, icon, isSuccess, onClose }) => {
+            useEffect(() => {
+                const timer = setTimeout(onClose, 3000);
+                return () => clearTimeout(timer);
+            }, [onClose]);
+
+            return (
+                <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[100] w-max max-w-[90vw]">
+                    <div className="animate-slide-up">
+                        <div className={`glass-panel border-white/20 px-4 py-3 rounded-2xl flex items-center gap-3 shadow-2xl backdrop-blur-2xl ${isSuccess ? 'bg-accent-green/10' : 'bg-white/5'}`}>
+                            <div className={`p-2 rounded-xl ${isSuccess ? 'bg-accent-green/20' : 'bg-white/10'}`}>
+                                <Icon icon={icon || (isSuccess ? 'Check' : 'AlertTriangle')} size={18} className={isSuccess ? 'text-accent-green' : 'text-white'} />
+                            </div>
+                            <p className="text-sm font-bold text-white pr-2 whitespace-nowrap">{message}</p>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const DashboardCard = ({ icon, title, value, subtext, onClick, color = "text-white", delay = "0s", isLocked }) => (
+            <div
+                onClick={isLocked ? () => window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Required progression not reached', icon: 'Lock' } })) : onClick}
+                className={`glass-panel rounded-2xl p-5 relative overflow-hidden active:scale-[0.98] transition-all cursor-pointer group animate-slide-in ${isLocked ? 'opacity-75 grayscale-[0.5]' : ''}`}
+                style={{ animationDelay: delay }}
+            >
+                {isLocked && (
+                    <div className="absolute top-3 right-3 text-muted/40">
+                        <Icon icon="Lock" size={14} />
+                    </div>
+                )}
                 <div className="flex justify-between items-start mb-3">
                     <div className="flex items-center gap-3">
-                        <div className={`p-2 rounded-xl bg-white/5 border border-white/5 group-hover:bg-white/10 transition-colors`}>
-                            <Icon icon={icon} size={20} className={color} />
+                        <div className={`p-2 rounded-xl bg-white/5 border border-white/5 group-hover:bg-white/10 transition-colors ${isLocked ? '' : 'group-hover:border-neon/30'}`}>
+                            <Icon icon={icon} size={20} className={isLocked ? 'text-muted' : color} />
                         </div>
                         <span className="text-sm font-medium text-muted group-hover:text-white transition-colors">{title}</span>
                     </div>
-                    <Icon icon="ChevronRight" size={16} className="text-muted/30 group-hover:text-white transition-colors" />
+                    {!isLocked && <Icon icon="ChevronRight" size={16} className="text-muted/30 group-hover:text-white transition-colors" />}
                 </div>
                 <div className="pl-1">
-                    <h3 className="font-heading font-bold text-2xl text-white tracking-tight mb-1 group-hover:scale-105 transition-transform origin-left">{value}</h3>
+                    <h3 className={`font-heading font-bold text-2xl tracking-tight mb-1 transition-transform origin-left ${isLocked ? 'text-muted' : 'text-white group-hover:scale-105'}`}>{isLocked ? 'Locked' : value}</h3>
                     <p className="text-[11px] text-muted font-medium">{subtext}</p>
                 </div>
             </div>
         );
 
         const App = () => {
+            const [isLoading, setIsLoading] = useState(true);
             const [view, setView] = useState('dashboard');
+
+            // Handle URL query parameters for view redirection
+            useEffect(() => {
+                const params = new URLSearchParams(window.location.search);
+                const requestedView = params.get('view');
+                if (requestedView === 'rqs') {
+                    setView('rqs');
+                } else if (requestedView === 'insights') {
+                    // Stay on dashboard but show toast
+                    setToast({
+                        message: 'Analytics feature coming soon in post beta',
+                        icon: 'Clock'
+                    });
+                }
+            }, []);
+
             const [activeTab, setActiveTab] = useState('myspace');
             const [navVisible, setNavVisible] = useState(true);
             const scrollTimer = useRef(null);
             const lastY = useRef(0);
 
+            // Consolidated User State
+            const [profile, setProfile] = useState({
+                name: "Loading...",
+                username: "",
+                avatar_url: null,
+                rqs: 0,
+                rqs_consistency: 0,
+                rqs_verification: 0,
+                rqs_impact: 0,
+                rqs_legacy_score: 0,
+                total_earnings: 0,
+                verified_count: 0
+            });
+
+            const [partnerStats, setPartnerStats] = useState({
+                interactionCount: 0,
+                streakWeeks: 0,
+                verifiedCount: 0,
+                tier: 'None'
+            });
+
+            const [brandInteractions, setBrandInteractions] = useState([]);
+            const [earnings, setEarnings] = useState({ total: 0, lastMonth: 0, logs: [], coupons: [], breakdown: [] });
+            const [status, setStatus] = useState('loading');
+
+            // Share Modal State
+            const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+            const [isPartnerModalOpen, setIsPartnerModalOpen] = useState(false);
+            const [sharePostData, setSharePostData] = useState(null);
+            const [toast, setToast] = useState(null);
+
+            useEffect(() => {
+                const handleToast = (e) => setToast(e.detail);
+                window.addEventListener('toast', handleToast);
+                return () => window.removeEventListener('toast', handleToast);
+            }, []);
+
+            const handleShare = (post) => {
+                setSharePostData(post);
+                setIsShareModalOpen(true);
+            };
+
+            const handlePartnerSubmit = async (formData) => {
+                try {
+                    // 1. Save to partner_applications table
+                    const user = await window.getCurrentUser();
+                    const { error } = await window.supabase
+                        .from('partner_applications')
+                        .upsert({
+                            user_id: user.id,
+                            legal_name: formData.legal_name,
+                            permanent_email: formData.permanent_email,
+                            id_number: formData.id_number,
+                            id_document_url: formData.id_document_url,
+                            bank_account_no: formData.bank_account_no,
+                            bank_ifsc: formData.bank_ifsc,
+                            bank_holder_name: formData.bank_holder_name,
+                            upi_id: formData.upi_id,
+                            status: 'pending',
+                            updated_at: new Date().toISOString()
+                        }, { onConflict: 'user_id' });
+
+                    if (error) throw error;
+
+                    // 2. Update status in profiles table explicitly
+                    await window.supabase
+                        .from('profiles')
+                        .update({ partner_application_status: 'pending' })
+                        .eq('id', user.id);
+
+                    // 3. Update local state
+                    setStatus('pending');
+
+                    window.dispatchEvent(new CustomEvent('toast', {
+                        detail: { message: 'Application Submitted Successfully!', icon: 'Check', isSuccess: true }
+                    }));
+                } catch (err) {
+                    console.error('Partner submission failed:', err);
+                    window.dispatchEvent(new CustomEvent('toast', {
+                        detail: { message: 'Submission failed. Try again.', icon: 'AlertTriangle' }
+                    }));
+                }
+            };
+
+            // Load user data from database
+            useEffect(() => {
+                const loadData = async () => {
+                    try {
+                        setIsLoading(true);
+                        const currentUser = await window.getCurrentUser();
+                        if (!currentUser) return;
+
+                        const user = currentUser;
+                        const cacheKey = `my_space_data_${user.id}`;
+
+                        // CACHE-FIRST: Try to load from cache first
+                        if (window.StateManager) {
+                            const cachedData = await window.StateManager.get(cacheKey);
+                            if (cachedData) {
+                                console.log('📦 Loading MY SPACE data from cache');
+                                setProfile(cachedData.profile);
+                                setPartnerStats(cachedData.partnerStats);
+                                setStatus(cachedData.status);
+                                setEarnings(cachedData.earnings);
+                                setBrandInteractions(cachedData.brandInteractions);
+                                setIsLoading(false);
+                                // Continue to fetch fresh data in background
+                            }
+                        }
+
+
+                        // ⚡ PARALLEL LOADING - All API calls fire simultaneously
+                        const [
+                            { data: profileData },
+                            stats,
+                            pStatus,
+                            earningsData,
+                            interactions
+                        ] = await Promise.all([
+                            window.supabase.from('profiles').select('*, rqs_legacy_score').eq('id', user.id).single(),
+                            window.getPartnerStats(),
+                            window.getPartnerStatus(),
+                            window.getMyEarnings(),
+                            window.getMyBrandInteractions()
+                        ]);
+
+                        const profileObj = profileData ? {
+                            name: profileData.full_name || "User",
+                            username: profileData.username || "",
+                            avatar_url: profileData.avatar_url,
+                            rqs: profileData.rqs_score || 0,
+                            rqs_consistency: profileData.rqs_consistency_score || 0,
+                            rqs_verification: profileData.rqs_verification_score || 0,
+                            rqs_impact: profileData.rqs_impact_score || 0,
+                            rqs_legacy_score: profileData.rqs_legacy_score || 0,
+                            total_earnings: profileData.total_earnings || 0,
+                            verified_count: 0
+                        } : profile;
+
+                        // Update state
+                        setProfile(profileObj);
+                        setPartnerStats(stats);
+                        setStatus(pStatus);
+                        setEarnings(earningsData);
+                        setBrandInteractions(interactions);
+
+                        // SAVE TO CACHE (5 minute TTL)
+                        if (window.StateManager) {
+                            await window.StateManager.set(cacheKey, {
+                                profile: profileObj,
+                                partnerStats: stats,
+                                status: pStatus,
+                                earnings: earningsData,
+                                brandInteractions: interactions
+                            }, { ttl: 5 * 60 * 1000 });
+                            console.log('💾 Saved MY SPACE data to cache');
+                        }
+
+
+                    } catch (error) {
+                        console.error('Failed to load user data:', error);
+                    } finally {
+                        setIsLoading(false);
+                    }
+                };
+                loadData();
+            }, []);
+
+            // Setup pull-to-refresh handler
+            useEffect(() => {
+                const setupPullToRefresh = () => {
+                    if (window.PullToRefresh) {
+                        window.PullToRefresh.onRefresh(async () => {
+                            window.location.reload();
+                        });
+                    } else {
+                        setTimeout(setupPullToRefresh, 100);
+                    }
+                };
+                setTimeout(setupPullToRefresh, 200);
+            }, []);
+
+            // Real-time RQS Updates
+            useEffect(() => {
+                const setupSubscription = async () => {
+                    const user = await window.getCurrentUser();
+                    if (!user) return;
+
+                    const subscription = window.supabase
+                        .channel('profile_changes')
+                        .on(
+                            'postgres_changes',
+                            {
+                                event: 'UPDATE',
+                                schema: 'public',
+                                table: 'profiles',
+                                filter: `id=eq.${user.id}`
+                            },
+                            (payload) => {
+                                console.log('Realtime RQS Update:', payload.new);
+                                const newData = payload.new;
+                                setProfile(prev => ({
+                                    ...prev,
+                                    name: newData.full_name || prev.name,
+                                    username: newData.username || prev.username,
+                                    avatar_url: newData.avatar_url || prev.avatar_url,
+                                    rqs: newData.rqs_score || 0,
+                                    rqs_consistency: newData.rqs_consistency_score || 0,
+                                    rqs_verification: newData.rqs_verification_score || 0,
+                                    rqs_impact: newData.rqs_impact_score || 0,
+                                    rqs_legacy_score: newData.rqs_legacy_score || 0
+                                    // verified_count and tier might need separate updates via stats, but this covers RQS
+                                }));
+
+                                // Auto-refresh other dependent stats if needed
+                                window.getPartnerStats().then(stats => {
+                                    setPartnerStats(prev => ({ ...prev, ...stats, tier: newData.partner_program_tier }));
+                                });
+                            }
+                        )
+                        .subscribe();
+
+                    return () => {
+                        window.supabase.removeChannel(subscription);
+                    };
+                };
+
+                setupSubscription();
+            }, []);
+
             // HOMEPAGE STYLE SCROLL LOGIC
             const handleScroll = (e) => {
-                const currentY = e.target.scrollTop;
+                // Support checking scrollTop on target or parent (ViewWrapper)
+                const currentY = e.target.scrollTop || window.scrollY;
+                const isScrollingDown = currentY > lastY.current;
 
-                // 1. Hide immediately on scroll
-                setNavVisible(false);
-
-                // 2. Clear previous timer
-                if (scrollTimer.current) clearTimeout(scrollTimer.current);
-
-                // 3. Show after stop (debounce)
-                scrollTimer.current = setTimeout(() => {
+                // Nav Logic (Hide on scroll down > 50, show on scroll up)
+                if (isScrollingDown && currentY > 50) {
+                    setNavVisible(false);
+                } else if (!isScrollingDown) {
                     setNavVisible(true);
-                }, 500); // 0.5s pause to reappear
+                }
 
                 lastY.current = currentY;
             };
@@ -1035,111 +1913,156 @@
                 if (activeTab !== 'myspace') return <div className="h-full flex flex-col items-center justify-center text-neon font-heading tracking-widest text-sm opacity-50">NAVIGATING...</div>;
 
                 // Pass handleScroll to all views so they trigger the nav logic
-                if (view === 'earnings') return <EarningsView onBack={() => setView('dashboard')} onScroll={handleScroll} />;
-                if (view === 'rqs') return <RQSView onBack={() => setView('dashboard')} onScroll={handleScroll} />;
-                if (view === 'monetization') return <MonetizationView onBack={() => setView('dashboard')} onScroll={handleScroll} />;
-                if (view === 'analytics') return <AnalyticsView onBack={() => setView('dashboard')} onScroll={handleScroll} />;
-                if (view === 'brands') return <BrandInteractionView onBack={() => setView('dashboard')} onScroll={handleScroll} />;
-                if (view === 'security') return <SecurityView onBack={() => setView('dashboard')} onScroll={handleScroll} />;
-                if (view === 'support') return <SupportView onBack={() => setView('dashboard')} onScroll={handleScroll} />;
+                if (view === 'earnings') return <EarningsView onBack={() => setView('dashboard')} onScroll={handleScroll} isHeaderVisible={navVisible} earnings={earnings} profile={profile} />;
+                if (view === 'rqs') return <RQSView onBack={() => setView('dashboard')} onScroll={handleScroll} isHeaderVisible={navVisible} profile={profile} />;
+                if (view === 'monetization') return <MonetizationView onBack={() => setView('dashboard')} onScroll={handleScroll} isHeaderVisible={navVisible} profile={profile} partnerStats={partnerStats} status={status} setStatus={setStatus} setIsPartnerModalOpen={setIsPartnerModalOpen} onRevenueClick={() => setView('earnings')} />;
+                if (view === 'brands') return <BrandInteractionView onBack={() => setView('dashboard')} onScroll={handleScroll} isHeaderVisible={navVisible} posts={brandInteractions} onShare={handleShare} />;
+                if (view === 'security') return <SecurityView onBack={() => setView('dashboard')} onScroll={handleScroll} isHeaderVisible={navVisible} />;
+                if (view === 'support') return <SupportView onBack={() => setView('dashboard')} onScroll={handleScroll} isHeaderVisible={navVisible} />;
+
+                // Unified Progression Logic (Dashboard & Inner View)
+                const rqsTarget = 75;
+                const interactionsTarget = 500;
+                const streakTarget = 4;
+
+                const rqsProgress = Math.min((profile.rqs / rqsTarget) * 100, 100);
+                const intProgress = Math.min((partnerStats.interactionCount / interactionsTarget) * 100, 100);
+                const streakProgress = Math.min((partnerStats.streakWeeks / streakTarget) * 100, 100);
+
+                // Final Synced Progress Calculation
+                const totalMonetizationProgress = Math.round((rqsProgress + intProgress + streakProgress) / 3);
+
+                const getStatusTag = (progress) => {
+                    if (progress <= 50) return '(Setting up)';
+                    if (progress <= 90) return '(Emerging)';
+                    if (progress < 100) return '(So close)';
+                    return '(Eligible)';
+                };
+
+                const isApproved = status === 'approved';
 
                 // Dashboard Home
                 return (
-                    <div className="flex flex-col h-full pt-20 pb-32 animate-slide-in">
-                        <div className="header-glass fixed top-0 left-0 w-full px-5 flex items-center justify-between h-[65px]">
+                    <div className="flex flex-col h-full animate-slide-in overflow-hidden relative">
+                        <ShareModal isOpen={isShareModalOpen} onClose={() => setIsShareModalOpen(false)} post={sharePostData} />
+                        <div className={`header-glass fixed top-0 left-0 w-full px-5 flex items-center justify-between h-[65px] z-50 transition-transform duration-500 ease-in-out ${navVisible ? 'translate-y-0' : '-translate-y-full'}`}>
                             <div className="flex items-center gap-3">
-                                <img src={USER_DATA.avatar} className="w-9 h-9 rounded-full bg-white/5 border border-white/10 shadow-lg" alt="Profile" />
+                                <Avatar
+                                    src={profile.avatar_url}
+                                    className="w-10 h-10 rounded-full bg-white/5 border border-white/10 shadow-lg object-cover"
+                                    fallbackSize={20}
+                                />
                                 <div>
-                                    <h1 className="font-heading text-base font-bold text-white leading-tight tracking-wide">My Space</h1>
-                                    <p className="text-[10px] text-muted font-medium tracking-wide">Creator Studio</p>
+                                    <h1 className="font-heading text-lg font-bold text-white leading-tight tracking-tight cursor-default">
+                                        My Space
+                                    </h1>
+                                    <p className="text-[11px] text-muted font-medium tracking-wide">Creator Studio</p>
                                 </div>
                             </div>
-                            <button onClick={() => setView('settings')} className="p-2 rounded-full bg-white/5 text-muted border border-white/5 hover:text-white transition-colors">
-                                <Icon icon="Settings" size={18} />
+                            <button onClick={() => setView('settings')} className="w-10 h-10 flex items-center justify-center rounded-full bg-white/5 text-muted border border-white/5 hover:text-white transition-colors">
+                                <Icon icon="Settings" size={20} />
                             </button>
                         </div>
 
                         <ViewWrapper onScroll={handleScroll}>
+                            <div className="space-y-4 px-1">
+                                <DashboardCard
+                                    icon="Wallet"
+                                    title="Revenue"
+                                    value={`₹${(profile.total_earnings || 0).toLocaleString()}`}
+                                    subtext={`Last 30 days: +₹${earnings.lastMonth.toLocaleString()}`}
+                                    color="text-neon"
+                                    onClick={() => setView('earnings')}
+                                    isLocked={!isApproved}
+                                    delay="0ms"
+                                />
 
-                            <DashboardCard
-                                icon="Wallet"
-                                title="Revenue"
-                                value={`₹${DATA_STORE.earnings.total.toLocaleString()}`}
-                                subtext="Last 30 days: +₹3,400"
-                                color="text-neon"
-                                onClick={() => setView('earnings')}
-                                delay="0ms"
-                            />
-
-                            <div onClick={() => setView('rqs')} className="glass-panel rounded-2xl p-5 relative overflow-hidden active:scale-[0.98] transition-all cursor-pointer group animate-slide-in" style={{ animationDelay: '100ms' }}>
-                                <div className="flex justify-between items-center mb-3">
-                                    <div className="flex items-center gap-3">
-                                        <div className="bg-gradient-to-r from-neon to-blue-600 px-2 py-1 rounded text-[10px] font-black text-white tracking-widest shadow-lg shadow-neon/20">RQS</div>
-                                        <span className="text-sm font-medium text-muted group-hover:text-white transition-colors">Reputation</span>
-                                    </div>
-                                    <Icon icon="ChevronRight" size={16} className="text-muted/30 group-hover:text-white transition-colors" />
-                                </div>
-                                <div className="pl-1">
-                                    <h3 className="font-heading font-bold text-2xl text-white tracking-tight mb-1">{USER_DATA.rqs} <span className="text-sm font-normal text-muted">/ 100</span></h3>
-                                    <p className="text-[11px] text-white/80 font-bold uppercase tracking-wide">Reputed Reviewer</p>
-                                </div>
-                            </div>
-
-                            <div onClick={() => setView('monetization')} className="glass-panel rounded-2xl p-5 relative overflow-hidden active:scale-[0.98] transition-all cursor-pointer group animate-slide-in" style={{ animationDelay: '200ms' }}>
-                                <div className="flex justify-between items-center mb-4">
-                                    <div className="flex items-center gap-3">
-                                        <div className="p-2 rounded-xl bg-white/5 border border-white/5 group-hover:border-neon/30 transition-colors">
-                                            <Icon icon="Zap" size={20} className="text-neon" />
+                                <div onClick={() => setView('rqs')} className="glass-panel rounded-2xl p-5 relative overflow-hidden active:scale-[0.98] transition-all cursor-pointer group animate-slide-in" style={{ animationDelay: '100ms' }}>
+                                    <div className="flex justify-between items-center mb-3">
+                                        <div className="flex items-center gap-3">
+                                            <div className="bg-brand-blue text-white px-1.5 py-0.5 rounded text-[10px] font-black tracking-widest ">RQS</div>
+                                            <span className="text-sm font-medium text-muted group-hover:text-white transition-colors">Reputation</span>
                                         </div>
-                                        <span className="text-sm font-medium text-muted group-hover:text-white transition-colors">Partner Program</span>
+                                        <Icon icon="ChevronRight" size={16} className="text-muted/30 group-hover:text-white transition-colors" />
                                     </div>
-                                    <span className="text-xs font-bold text-white bg-neon/20 px-2 py-0.5 rounded text-neon border border-neon/20">Level 1</span>
-                                </div>
-                                <div className="h-1.5 w-full bg-white/5 rounded-full relative mt-2">
-                                    <div className="h-full bg-neon rounded-full w-[60%] shadow-[0_0_8px_var(--neon)] relative">
-                                        <div className="glow-tip"></div>
+                                    <div className="pl-1">
+                                        <h3 className="font-heading font-bold text-4xl text-white tracking-tight mb-1">{profile.rqs} <span className="text-base font-normal text-muted">/ 100</span></h3>
+                                        <p className="text-[11px] text-muted font-bold uppercase tracking-wide">REPUTED REVIEWER</p>
                                     </div>
                                 </div>
-                                <p className="text-[10px] text-muted mt-3">Active Progression</p>
-                            </div>
 
-                            <DashboardCard
-                                icon="Chart"
-                                title="Insights"
-                                value="45.2K Views"
-                                subtext="Engagement up 12%"
-                                color="text-white"
-                                onClick={() => setView('analytics')}
-                                delay="300ms"
-                            />
-
-                            <div className="mt-6 animate-slide-in" style={{ animationDelay: '350ms' }}>
-                                <div className="flex items-center justify-between mb-3 px-1">
-                                    <h3 className="text-xs font-bold text-muted uppercase tracking-wider">Brand Interactions</h3>
-                                    <button onClick={() => setView('brands')} className="text-[10px] text-neon flex items-center gap-1 hover:text-white transition-colors">View All <Icon icon="ChevronRight" size={10} /></button>
-                                </div>
-                                <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2 snap-x">
-                                    {RAW_POSTS.filter(p => p.seenBy).slice(0, 5).map((b, i) => (
-                                        <div key={i} className="snap-start shrink-0 glass-panel rounded-xl p-3 min-w-[100px] active:bg-white/5 transition-colors">
-                                            <div className="w-8 h-8 rounded bg-white flex items-center justify-center mb-2 shadow-sm overflow-hidden p-1">
-                                                <img src={BRAND_LOGOS[b.seenBy] || "https://cdn.simpleicons.org/adirexx"} className="w-full h-full object-contain" />
+                                <div onClick={() => setView('monetization')} className="glass-panel rounded-2xl p-5 relative overflow-hidden active:scale-[0.98] transition-all cursor-pointer group animate-slide-in" style={{ animationDelay: '200ms' }}>
+                                    <div className="flex justify-between items-center mb-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="p-2.5 rounded-xl bg-white/5 border border-white/5 group-hover:border-neon/30 transition-colors">
+                                                <Icon icon="Zap" size={20} className="text-neon" />
                                             </div>
-                                            <p className="text-[10px] font-bold text-white truncate">{b.seenBy}</p>
+                                            <span className="text-sm font-medium text-muted group-hover:text-white transition-colors">Partner Program</span>
                                         </div>
-                                    ))}
+                                        <span className={`text-[10px] font-bold px-2.5 py-1 rounded border tracking-widest ${isApproved ? 'bg-accent-green/20 text-accent-green border-accent-green/20' :
+                                            status === 'pending' ? 'bg-amber-500/20 text-amber-500 border-amber-500/20' :
+                                                status === 'applied' ? 'bg-blue-500/20 text-blue-500 border-blue-500/20' :
+                                                    'bg-transparent text-white border-white/30'
+                                            }`}>
+                                            {isApproved ? 'APPROVED' :
+                                                status === 'pending' ? 'RECEIVED' :
+                                                    status === 'applied' ? 'SENT' :
+                                                        getStatusTag(totalMonetizationProgress).toUpperCase()}
+                                        </span>
+                                    </div>
+                                    <div className="h-1.5 w-full bg-white/10 rounded-full relative mt-2">
+                                        <div className={`h-full rounded-full relative transition-all duration-1000 ease-out bg-neon shadow-[0_0_15px_var(--neon)]`} style={{ width: `${isApproved ? 100 : totalMonetizationProgress}%` }}>
+                                            <div className="glow-tip"></div>
+                                        </div>
+                                    </div>
+                                    <p className="text-[11px] text-muted mt-3 font-medium">Active Progression: {isApproved ? '100%' : `${totalMonetizationProgress}%`}</p>
                                 </div>
-                            </div>
 
-                            <div className="mt-2 mb-8 pt-6 border-t border-white/5 animate-slide-in" style={{ animationDelay: '400ms' }}>
-                                <div className="grid grid-cols-2 gap-3">
-                                    <button onClick={() => setView('security')} className="glass-panel p-4 rounded-xl flex flex-col items-center justify-center gap-2 hover:bg-white/5 transition-colors active:scale-95">
-                                        <Icon icon="Shield" size={20} className="text-muted" />
-                                        <span className="text-xs font-bold text-muted">Security</span>
-                                    </button>
-                                    <button onClick={() => setView('support')} className="glass-panel p-4 rounded-xl flex flex-col items-center justify-center gap-2 hover:bg-white/5 transition-colors active:scale-95">
-                                        <Icon icon="Help" size={20} className="text-muted" />
-                                        <span className="text-xs font-bold text-muted">Support</span>
-                                    </button>
+                                <DashboardCard
+                                    icon="BarChart2"
+                                    title="Insights"
+                                    value="View Analytics"
+                                    subtext="Coming Soon"
+                                    color="text-white"
+                                    onClick={() => window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Analytics coming soon in post beta', icon: 'Clock' } }))}
+                                    delay="300ms"
+                                />
+
+                                <div className="mt-8 animate-slide-in" style={{ animationDelay: '350ms' }}>
+                                    <div className="flex items-center justify-between mb-4 px-1">
+                                        <h3 className="text-xs font-bold text-white uppercase tracking-wider">BRAND INTERACTIONS</h3>
+                                        <button onClick={() => setView('brands')} className="text-[10px] text-neon flex items-center gap-1 hover:text-white transition-colors">View All <Icon icon="ChevronRight" size={10} /></button>
+                                    </div>
+                                    <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2 snap-x">
+                                        {brandInteractions.length === 0 ? (
+                                            <div className="text-[10px] text-muted p-2">No brand interactions yet</div>
+                                        ) : brandInteractions.slice(0, 5).map((b, i) => (
+                                            <div key={i} className="snap-start shrink-0 glass-panel rounded-xl p-3 min-w-[100px] active:bg-white/5 transition-colors">
+                                                <div className="w-8 h-8 rounded bg-white flex items-center justify-center mb-2 shadow-sm overflow-hidden p-1">
+                                                    <img
+                                                        src={BRAND_LOGOS[b.brand_name] || "https://cdn.simpleicons.org/adirexx"}
+                                                        className="w-full h-full object-contain"
+                                                        onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'block' }}
+                                                    />
+                                                    <span className="hidden text-[8px] font-bold text-black">{b.brand_name?.substring(0, 2)}</span>
+                                                </div>
+                                                <p className="text-[10px] font-bold text-white truncate max-w-[80px]">{b.brand_name}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="mt-2 mb-8 pt-6 border-t border-white/5 animate-slide-in" style={{ animationDelay: '400ms' }}>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <button onClick={() => setView('security')} className="glass-panel p-4 rounded-xl flex flex-col items-center justify-center gap-2 hover:bg-white/5 transition-colors active:scale-95">
+                                            <Icon icon="Shield" size={20} className="text-muted" />
+                                            <span className="text-xs font-bold text-muted">Security</span>
+                                        </button>
+                                        <button onClick={() => setView('support')} className="glass-panel p-4 rounded-xl flex flex-col items-center justify-center gap-2 hover:bg-white/5 transition-colors active:scale-95">
+                                            <Icon icon="Help" size={20} className="text-muted" />
+                                            <span className="text-xs font-bold text-muted">Support</span>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </ViewWrapper>
@@ -1147,34 +2070,94 @@
                 );
             };
 
-            const NavItem = ({ icon, label, isActive, onClick, isMySpace }) => (
-                <button onClick={onClick} className={`flex-1 flex flex-col items-center justify-center gap-1 group relative active:scale-90 transition-transform h-full`}>
-                    <div className={`relative p-1.5 rounded-xl transition-all duration-300 ${isActive ? 'bg-white/5 scale-105' : ''}`}>
-                        <Icon icon={icon} size={24} className={`transition-all duration-300 ${isActive ? 'text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.5)]' : 'text-muted group-hover:text-white'}`} />
-                        {isMySpace && isActive && <div className="absolute inset-0 bg-neon/20 blur-xl rounded-full"></div>}
+            const NavItem = ({ icon, label, isActive, onClick, isMySpace, badge }) => (
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        if (typeof vibrate === 'function') vibrate(5);
+                        if (isMySpace) {
+                            checkMySpaceRedirect();
+                        } else {
+                            if (onClick) onClick();
+                        }
+                    }}
+                    className={`relative group flex flex-col items-center justify-center w-14 h-14 ${isActive ? '' : ''}`}
+                >
+                    <div className={`relative ${isMySpace ? 'myspace-trigger' : ''} p-1.5 rounded-xl ${isActive ? 'bg-white/5' : ''}`} >
+                        <Icon icon={icon} size={24} className={`${isActive ? 'text-white glow-white stroke-[2.5px]' : 'text-muted group-hover:text-white stroke-[1.5px]'}`} />
+
+                        {/* Badge Logic */}
+                        {badge > 0 && (
+                            <div className="absolute -top-1 -right-1 flex items-center justify-center min-w-[18px] h-[18px] bg-blue-500 rounded-full border-2 border-[#020205] z-50 animate-pulse-subtle">
+                                <span className="absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75 animate-ping"></span>
+                                <span className="relative text-[10px] font-bold text-white px-1 leading-none">
+                                    {badge > 99 ? '99+' : badge}
+                                </span>
+                            </div>
+                        )}
+
                     </div>
                 </button>
             );
 
-            const BottomNav = ({ activeTab, setActiveTab }) => (
-                <div className="fixed bottom-0 w-full h-[65px] px-2 pb-2 flex justify-between items-center z-40 bg-[#020205]/95 backdrop-blur-xl border-t border-white/10 max-w-[450px]">
-                    <NavItem icon="Home" label="Home" isActive={activeTab === 'home'} onClick={() => goTo('HOMEPAGE_FINAL.HTML')} />
-                    <NavItem icon="Grid" label="Categories" isActive={activeTab === 'categories'} onClick={() => goTo('CATAGORYPAGE.HTML')} />
-                    <NavItem icon="MySpaceLogo" label="My Space" isActive={activeTab === 'myspace'} onClick={() => setActiveTab('myspace')} isMySpace={true} />
-                    <NavItem icon="Bell" label="Notifications" isActive={activeTab === 'notifs'} onClick={() => goTo('NOTIFICATION PANEL.HTML')} />
-                    <NavItem icon="User" label="Profile" isActive={activeTab === 'profile'} onClick={() => goTo('PRIVATE OWNER PROFILE.HTML')} />
-                </div>
-            );
+            const BottomNav = ({ activeTab, setActiveTab, isVisible = true }) => {
+                // Initialize with cached value to prevent flicker
+                const [unreadCount, setUnreadCount] = useState(() => {
+                    return window.getUnreadCountFromCache ? window.getUnreadCountFromCache() : 0;
+                });
+
+                useEffect(() => {
+                    // Subscribe to real-time unread count
+                    const unsubscribe = window.subscribeToUnreadCount && window.subscribeToUnreadCount((count) => {
+                        setUnreadCount(count);
+                    });
+
+                    return () => {
+                        if (unsubscribe && typeof unsubscribe === 'function') unsubscribe();
+                    };
+                }, []);
+
+                return (
+                    <div
+                        className="nav-glass fixed bottom-0 left-0 w-full h-[65px] px-2 pb-2 flex justify-between items-center z-50"
+                        style={{
+                            transform: isVisible ? 'translateY(0)' : 'translateY(100%)',
+                            transition: 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)'
+                        }}
+                    >
+                        <NavItem icon="Home" label="Home" isActive={activeTab === 'home'} onClick={() => goTo('HOMEPAGE_FINAL.HTML')} />
+                        <NavItem icon="Grid" label="Categories" isActive={activeTab === 'categories'} onClick={() => goTo('CATAGORYPAGE.HTML')} />
+                        <NavItem icon="MySpaceLogo" label="My Space" isActive={activeTab === 'myspace'} isMySpace={true} />
+                        <NavItem
+                            icon="Bell"
+                            label="Notifications"
+                            isActive={activeTab === 'notifs'}
+                            onClick={() => goTo('NOTIFICATION PANEL.HTML')}
+                            badge={unreadCount} // Pass unread count
+                        />
+                        <NavItem icon="User" label="Profile" isActive={activeTab === 'profile'} onClick={() => goTo('PRIVATE OWNER PROFILE.HTML')} />
+                    </div>
+                );
+            };
 
             return (
                 <div className="flex-1 flex flex-col relative h-full">
                     <div className="flex-1 overflow-hidden relative">
                         {renderContent()}
                     </div>
-                    {/* NAV BAR with Slide Transition */}
-                    <div className={`absolute bottom-0 w-full transition-transform duration-300 ${navVisible ? 'translate-y-0' : 'translate-y-full'}`}>
-                        <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
-                    </div>
+                    {/* NAV BAR - Dynamic */}
+                    <BottomNav
+                        activeTab={activeTab}
+                        setActiveTab={setActiveTab}
+                        isVisible={navVisible}
+                    />
+                    {toast && <Toast {...toast} onClose={() => setToast(null)} />}
+                    <ShareModal isOpen={isShareModalOpen} onClose={() => setIsShareModalOpen(false)} post={sharePostData} />
+                    <PartnerApplicationModal
+                        isOpen={isPartnerModalOpen}
+                        onClose={() => setIsPartnerModalOpen(false)}
+                        onSubmit={handlePartnerSubmit}
+                    />
                 </div>
             );
         };
