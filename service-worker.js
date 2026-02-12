@@ -1,5 +1,6 @@
 // Dynamic version - will be replaced at build time
 // For localhost, use timestamp; for production, use build timestamp
+// Updated at: API_FIX_TIMESTAMP
 const VERSION = self.registration.scope.includes('localhost')
   ? Date.now().toString()
   : 'BUILD_TIMESTAMP_PLACEHOLDER';
@@ -10,7 +11,9 @@ const CACHE_NAME = `plusopinion-pwa-${VERSION}`;
 const FILES_TO_CACHE = [
   "./",
   "./index.html",
+  "./onboarding.html",
   "./HOMEPAGE_FINAL.HTML",
+  "./BOOKMARKS.HTML",
   "./CATAGORYPAGE.HTML",
   "./PRIVATE OWNER PROFILE.HTML",
   "./PUBLIC POV PROFILE.HTML",
@@ -18,16 +21,38 @@ const FILES_TO_CACHE = [
   "./MY SPACE FINAL(COMPANIES).HTML",
   "./NOTIFICATION PANEL.HTML",
   "./reset-password.html",
+
+  // Core Scripts
   "./runtime.js",
   "./bridge.js",
   "./data.seed.js",
   "./auth.js",
+  "./auth_guard.js",
   "./supabase.js",
+  "./api.js",
+
+  // SPA Infrastructure
+  "./state_manager.js",
+  "./router.js",
+  "./pull_to_refresh.js",
+  "./navigation_preloader.js",
+
+  // Feature Scripts
+  "./notifications.js",
+  "./rqs_calculator.js",
+  "./payment_gateway.js",
+  "./build-version.js",
+
+  // Styles
   "./global.css",
+
+  // Media
   "./bg-video.mp4",
-  "./manifest.json",
   "./icon-192.png",
-  "./icon-512.png"
+  "./icon-512.png",
+
+  // PWA
+  "./manifest.json"
 ];
 
 // Install event - cache files
