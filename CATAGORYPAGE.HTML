@@ -49,12 +49,13 @@
     <script src="https://cdn.tailwindcss.com"></script>
 
     <script src="./runtime.js"></script>
-    <script src="./data.seed.js"></script>
-    <script src="./bridge.js"></script>
+    <script src="api.js?v=3.2"></script>
+    <!-- Categories will be dynamically generated from user posts and tags -->
 
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script>if ("serviceWorker" in navigator) { window.addEventListener("load", () => { navigator.serviceWorker.register("./service-worker.js"); }); }</script>
     <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
 
     <!-- Visual Tokens (MATCHING HOMEPAGE_FINAL.HTML) -->
@@ -259,27 +260,33 @@
             }
         }
 
-        /* Icon Box */
-        .icon-box {
+        /* Vibrant Icon Box - No gradient overlay, pure vibrant colors */
+        .vibrant-icon-box {
             position: relative;
-            overflow: hidden;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
-        .icon-box::after {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: linear-gradient(to bottom right, rgba(255, 255, 255, 0.25), transparent, rgba(0, 0, 0, 0.1));
-            transform: rotate(45deg);
-            pointer-events: none;
+        .vibrant-icon-box:active {
+            transform: scale(0.90);
         }
     </style>
 
-    <script>
+    <!-- Core Logic Scripts -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script type="module" src="./supabase.js?v=2.0"></script>
+    <script type="module" src="./auth.js?v=2.0"></script>
+    <script type="module" src="./api.js?v=2.0"></script>
+
+    <!-- SPA Core Infrastructure -->
+    <script src="./state_manager.js"></script>
+    <script src="./router.js"></script>
+    <script src="./pull_to_refresh.js"></script>
+    <script src="./navigation_preloader.js"></script>
+
+    <script type="module" src="./notifications.js?v=2.0"></script>
+
+    <script type="module">
         import { supabase } from "./supabase.js";
 
         supabase.auth.onAuthStateChange((event, session) => {
@@ -317,6 +324,30 @@
         const goTo = (page) => {
             window.scrollTo(0, 0);
             window.location.href = page;
+        };
+
+        const checkMySpaceRedirect = async () => {
+            try {
+                const user = await window.getCurrentUser();
+
+                if (!user) {
+                    window.location.href = 'MY SPACE FINAL (USER).HTML';
+                    return;
+                }
+                const { data: profile } = await window.supabase
+                    .from('profiles')
+                    .select('is_business_account, company_name')
+                    .eq('id', user.id)
+                    .single();
+
+                if (profile && profile.is_business_account) {
+                    window.location.href = 'MY SPACE FINAL(COMPANIES).HTML';
+                } else {
+                    window.location.href = 'MY SPACE FINAL (USER).HTML';
+                }
+            } catch (e) {
+                window.location.href = 'MY SPACE FINAL (USER).HTML';
+            }
         };
 
         function dispatchAction(action) {
@@ -366,7 +397,7 @@
             BookOpen: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" /><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" /></svg>,
             Plane: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12h5" /><path d="M13 12h3" /><path d="M13 2c7.75 0 8.97 2.47 9 10 0 8.95-3.6 9.87-9 10" /><path d="M10 16.6c5.56.86 10-.9 10-4.6 0-4.66-6.66-2-6-6" /></svg>,
             Plus: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14" /></svg>,
-            X: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18M6 6 18 12" /></svg>,
+            X: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>,
             Trending: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18" /><polyline points="17 6 23 6 23 12" /></svg>,
             Briefcase: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="14" x="2" y="7" rx="2" ry="2" /><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" /></svg>,
             Gamepad: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><line x1="6" x2="10" y1="12" y2="12" /><line x1="8" x2="8" y1="10" y2="14" /><line x1="15" x2="15.01" y1="13" y2="13" /><line x1="18" x2="18.01" y1="11" y2="11" /><rect width="20" height="12" x="2" y="6" rx="2" /></svg>,
@@ -375,13 +406,30 @@
             Camera: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" /><circle cx="12" cy="13" r="3" /></svg>,
             Dumbbell: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="m6.5 6.5 11 11" /><path d="m21 21-1-1" /><path d="m3 3 1 1" /><path d="m18 22 4-4" /><path d="m2 6 4-4" /><path d="m3 10 7-7" /><path d="m14 21 7-7" /></svg>,
             Tent: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3.5 21 14 3" /><path d="M20.5 21 10 3" /><path d="M15.5 21 12 15l-3.5 6" /><path d="M2 21h20" /></svg>,
+            DollarSign: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" x2="12" y1="2" y2="22" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>,
             MySpaceLogo: (p) => (
                 <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M11 3L3 22" strokeLinejoin="bevel" />
                     <path d="M21 22L11 3" strokeLinejoin="bevel" />
                     <path d="M22 8L4 18" strokeWidth="2.5" />
                 </svg>
-            )
+            ),
+            // Additional Icons for Categories
+            Film: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" /><path d="M7 3v18" /><path d="M3 7.5h4" /><path d="M3 12h18" /><path d="M3 16.5h4" /><path d="M17 3v18" /><path d="M17 7.5h4" /><path d="M17 16.5h4" /></svg>,
+            Book: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" /></svg>,
+            Activity: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2" /></svg>,
+            MapPin: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" /></svg>,
+            ShoppingBag: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" /><path d="M3 6h18" /><path d="M16 10a4 4 0 0 1-8 0" /></svg>,
+            Zap: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>,
+            Truck: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2" /><path d="M15 18H9" /><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14" /><circle cx="17" cy="18" r="2" /><circle cx="7" cy="18" r="2" /></svg>,
+            PenTool: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="m12 19 7-7 3 3-7 7-3-3z" /><path d="m18 13-1.5-7.5L2 2l3.5 14.5L13 18l5-5z" /><path d="m2 2 7.586 7.586" /><circle cx="11" cy="11" r="2" /></svg>,
+            Tool: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" /></svg>,
+            Radio: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9" /><path d="M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.5" /><circle cx="12" cy="12" r="2" /><path d="M16.2 7.8c2.3 2.3 2.3 6.1 0 8.5" /><path d="M19.1 4.9C23 8.8 23 15.1 19.1 19" /></svg>,
+            Atom: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1" /><path d="M20.2 20.2c2.04-2.03.02-7.36-4.5-11.9-4.54-4.52-9.87-6.54-11.9-4.5-2.04 2.03-.02 7.36 4.5 11.9 4.54 4.52 9.87 6.54 11.9 4.5Z" /><path d="M15.7 15.7c4.52-4.54 6.54-9.87 4.5-11.9-2.03-2.04-7.36-.02-11.9 4.5-4.52 4.54-6.54 9.87-4.5 11.9 2.03 2.04 7.36.02 11.9-4.5Z" /></svg>,
+            GraduationCap: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z" /><path d="M6 12v5c3 3 9 3 12 0v-5" /></svg>,
+            MoreHorizontal: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1" /><circle cx="19" cy="12" r="1" /><circle cx="5" cy="12" r="1" /></svg>,
+            Sparkles: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" /><path d="M5 3v4" /><path d="M19 17v4" /><path d="M3 5h4" /><path d="M17 19h4" /></svg>,
+            Wallet: (p) => <svg {...p} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1" /><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4" /></svg>
         };
 
         const Icon = ({ icon, size = 20, className = "" }) => {
@@ -396,317 +444,510 @@
             }
         };
 
-        const categoriesState = window.PlusOpinion?.state?.categories;
+        // Comprehensive Category Color Map
+        const CATEGORY_COLORS = {
+            // Technology & Electronics
+            'technology': '#22D3EE',
+            'tech': '#22D3EE',
+            'electronics': '#22D3EE',
 
-        if (!categoriesState) {
-            throw new Error("Categories data not loaded. Check runtime.js and data.seed.js");
-        }
+            // Gaming
+            'gaming': '#D946EF',
+            'games': '#D946EF',
 
-        // --- VAST DATA STRUCTURE ---
-        const {
-            DEEP_DB,
-            POPULAR_KEYS,
-            GROWING_KEYS,
-            ALL_KEYS
-        } = window.PlusOpinion.state.categories;
+            // Fashion & Apparel
+            'fashion': '#EC4899',
+            'apparel': '#EC4899',
+            'clothing': '#EC4899',
+
+            // Food & Beverage
+            'food': '#F97316',
+            'food & drink': '#F97316',
+            'food & bev': '#F97316',
+            'beverage': '#F97316',
+            'restaurants': '#F97316',
+
+            // Personal Care & Beauty
+            'personal care': '#A855F7',
+            'beauty': '#A855F7',
+            'cosmetics': '#A855F7',
+
+            // Automotive
+            'automotive': '#10B981',
+            'cars': '#10B981',
+            'vehicles': '#10B981',
+
+            // Home & Living
+            'home': '#EC4899',
+            'home & living': '#EC4899',
+            'furniture': '#EC4899',
+
+            // Travel
+            'travel': '#0EA5E9',
+            'tourism': '#0EA5E9',
+
+            // Finance
+            'finance': '#3B82F6',
+            'banking': '#3B82F6',
+
+            // Education
+            'education': '#8B5CF6',
+            'learning': '#8B5CF6',
+
+            // Office & Business
+            'office': '#6B7280',
+            'business': '#6B7280',
+            'work': '#6B7280',
+
+            // Entertainment
+            'movies': '#8B5CF6',
+            'music': '#EC4899',
+            'books': '#3B82F6',
+            'entertainment': '#A855F7',
+
+            // Health & Fitness
+            'health': '#10B981',
+            'fitness': '#10B981',
+            'wellness': '#10B981',
+
+            // Sports
+            'sports': '#F97316',
+            'outdoor': '#10B981',
+
+            // Photography
+            'photography': '#6B7280',
+            'camera': '#6B7280',
+
+            // Pets
+            'pets': '#F97316',
+            'animals': '#F97316',
+
+            // Science
+            'science': '#3B82F6',
+
+            // Others / Miscellaneous
+            'others': '#6B7280',
+            'miscellaneous': '#6B7280',
+
+            // Default fallback
+            'default': '#6B7280'
+        };
+
+        // Helper function to assign color to category
+        const getCategoryColor = (category) => {
+            // Only use category.color if it's a valid hex/rgb color (starts with # or rgb)
+            if (category.color && (category.color.startsWith('#') || category.color.startsWith('rgb'))) {
+                return category.color;
+            }
+            const name = category.name?.toLowerCase() || category.id?.toLowerCase() || '';
+            return CATEGORY_COLORS[name] || CATEGORY_COLORS['default'];
+        };
+
+        // State maintained in App component and Supabase
+        // Removed static DEEP_DB logic
 
         // --- COMPONENTS ---
 
         // REPLACED WITH MY SPACE NAV BAR COMPONENT
-        const NavItem = ({ icon, label, isActive, onClick, isMySpace }) => (
-            <button onClick={onClick} className={`flex-1 flex flex-col items-center justify-center gap-1 group relative active:scale-90 transition-transform h-full`}>
-                <div className={`relative p-1.5 rounded-xl transition-all duration-300 ${isActive ? 'bg-white/5 scale-105' : ''}`}>
-                    <Icon icon={icon} size={24} className={`transition-all duration-300 ${isActive ? 'text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.5)]' : 'text-muted group-hover:text-white'}`} />
-                    {isMySpace && isActive && <div className="absolute inset-0 bg-neon/20 blur-xl rounded-full"></div>}
+        const NavItem = ({ icon, label, isActive, onClick, isMySpace, badge }) => (
+            <button
+                onClick={() => {
+                    vibrate(5);
+                    if (isMySpace) {
+                        checkMySpaceRedirect();
+                    } else if (onClick) {
+                        onClick();
+                    }
+                }}
+                className={`relative group flex flex-col items-center justify-center w-16 h-16 ${isActive ? '' : ''}`}
+            >
+                <div
+                    className={`relative ${isMySpace ? 'myspace-trigger' : ''} transition-all duration-300`}
+                    style={{
+                        padding: isActive ? '10px' : '6px',
+                        borderRadius: isActive ? '16px' : '12px',
+                        backgroundColor: isActive ? 'rgba(255, 255, 255, 0.08)' : 'transparent'
+                    }}
+                >
+                    <Icon icon={icon} size={24} className={`${isActive ? 'text-white glow-white stroke-[2.5px]' : 'text-muted group-hover:text-white stroke-[1.5px]'}`} />
+
+                    {/* Badge Logic */}
+                    {badge > 0 && (
+                        <div className="absolute -top-1 -right-1 flex items-center justify-center min-w-[18px] h-[18px] bg-blue-500 rounded-full border-2 border-[#020205] z-50 animate-pulse-subtle">
+                            <span className="absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75 animate-ping"></span>
+                            <span className="relative text-[10px] font-bold text-white px-1 leading-none">
+                                {badge > 99 ? '99+' : badge}
+                            </span>
+                        </div>
+                    )}
+
                 </div>
             </button>
         );
 
         // REPLACED WITH MY SPACE BOTTOM NAV
-        const BottomNav = ({ activeTab }) => (
-            <div className="fixed bottom-0 w-full h-[65px] px-2 pb-2 flex justify-between items-center z-40 bg-[#020205]/95 backdrop-blur-xl border-t border-white/10 max-w-[450px]">
-                <NavItem icon="Home" label="Home" isActive={activeTab === 'home'} onClick={() => goTo('HOMEPAGE_FINAL.HTML')} />
-                <NavItem icon="Grid" label="Categories" isActive={activeTab === 'categories'} onClick={() => goTo('CATAGORYPAGE.HTML')} />
-                <NavItem icon="MySpaceLogo" label="My Space" isActive={activeTab === 'myspace'} onClick={() => goTo('MY%20SPACE%20FINAL%20(USER).HTML')} isMySpace={true} />
-                <NavItem icon="Bell" label="Notifications" isActive={activeTab === 'notifs'} onClick={() => goTo('NOTIFICATION%20PANEL.HTML')} />
-                <NavItem icon="User" label="Profile" isActive={activeTab === 'profile'} onClick={() => goTo('PRIVATE%20OWNER%20PROFILE.HTML')} />
-            </div>
-        );
 
-        // 3D CUBOID CARD
-        const CategoryCard = ({ cat, onClick, type = 'standard' }) => (
-            <div
-                onClick={() => { vibrate(5); onClick(cat); }}
-                className={`cat-card-3d rounded-2xl flex flex-col justify-between cursor-pointer group bg-white/5
-                    ${type === 'growing' ? 'min-w-[140px] w-[140px] p-3 h-[120px] snap-start' : 'p-4 h-[110px]'}
-                `}
-                style={{ '--tint-color': cat.color }}
-            >
-                <div className="flex justify-between items-start relative z-10">
-                    {/* INTERESTING ICON BOX: Colored, Slight Gradient Overlay */}
-                    <div
-                        className="w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-lg icon-box transition-all duration-300 group-active:scale-90"
-                        style={{ backgroundColor: cat.color }}
-                    >
-                        <Icon icon={cat.icon} size={20} className="text-white relative z-10" />
-                    </div>
-                    {type === 'growing' && (
-                        <div className="flex items-center gap-1 text-[10px] font-bold text-accent-green">
-                            <Icon icon="Trending" size={10} /> {cat.trend}
-                        </div>
-                    )}
-                </div>
-                <div className="relative z-10 mt-auto">
-                    <h3 className={`font-heading font-bold text-white tracking-wide drop-shadow-sm ${type === 'growing' ? 'text-sm' : 'text-sm'}`}>{cat.title}</h3>
-                    {type !== 'growing' && <span className="text-[10px] text-muted">{cat.count} opinions</span>}
-                </div>
-            </div>
-        );
 
-        // List Item for "All Categories"
-        const ListItem = ({ cat, onClick }) => (
-            <div
-                onClick={() => { vibrate(5); onClick(cat); }}
-                className="flex items-center justify-between p-4 rounded-xl border border-white/5 bg-white/5 active:bg-white/10 transition-colors cursor-pointer group"
-            >
-                <div className="flex items-center gap-4">
-                    {/* INTERESTING ICON BOX: Colored, Slight Gradient Overlay */}
-                    <div
-                        className="w-8 h-8 rounded-lg flex items-center justify-center text-white shadow-sm icon-box transition-transform duration-300 group-active:scale-90"
-                        style={{ backgroundColor: cat.color }}
-                    >
-                        <Icon icon={cat.icon} size={16} className="text-white relative z-10" />
-                    </div>
-                    <span className="text-sm font-medium text-white">{cat.title}</span>
-                </div>
-                <Icon icon="ChevronRight" size={16} className="text-muted" />
-            </div>
-        );
-
-        // DEEP DRAWER
-        const DeepDrawer = ({ isOpen, onClose, category }) => {
-            const [viewLevel, setViewLevel] = useState('subs'); // subs -> brands -> models
-            const [selectedSub, setSelectedSub] = useState(null);
-            const [selectedBrand, setSelectedBrand] = useState(null);
-            const [isDragging, setIsDragging] = useState(false);
-
-            // Get Data
-            const subData = category ? (DEEP_DB[category.id]?.subs || []) : [];
-
-            // Reset
-            useEffect(() => {
-                setViewLevel('subs');
-                setSelectedSub(null);
-                setSelectedBrand(null);
-            }, [category]);
-
-            const handleSubClick = (sub) => {
-                vibrate(5);
-                if (sub.brands && sub.brands.length > 0) {
-                    setSelectedSub(sub);
-                    setViewLevel('brands');
-                } else {
-                    console.log("Future Feed:", sub.title);
-                }
-            };
-
-            const handleBrandClick = (brand) => {
-                vibrate(5);
-                if (brand.models && brand.models.length > 0) {
-                    setSelectedBrand(brand);
-                    setViewLevel('models');
-                } else {
-                    alert("Opening Feed for " + brand.name);
-                }
-            };
-
-            const goBack = () => {
-                vibrate(5);
-                if (viewLevel === 'models') setViewLevel('brands');
-                else if (viewLevel === 'brands') setViewLevel('subs');
-                else onClose();
-            };
+        // PREMIUM 3D CATEGORY CARD (High-depth button effect, horizontal layout)
+        const CategoryCard = ({ cat, onClick, type = 'standard' }) => {
+            const color = getCategoryColor(cat);
+            // Fix Finance logo missing
+            const iconName = (cat.name || cat.title)?.toLowerCase() === 'finance' ? 'Wallet' : cat.icon;
 
             return (
-                <AnimatePresence>
-                    {isOpen && (
-                        <>
-                            <motion.div
-                                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                                className="fixed inset-0 z-50 drawer-overlay" onClick={onClose}
-                            />
-                            <motion.div
-                                initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
-                                transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                                drag="y" dragConstraints={{ top: 0, bottom: 0 }} dragElastic={{ top: 0, bottom: 0.2 }}
-                                onDragEnd={(e, { offset, velocity }) => {
-                                    if (offset.y > 100 || velocity.y > 200) onClose();
-                                }}
-                                className="fixed bottom-0 left-0 right-0 max-w-[450px] mx-auto z-50 bg-[#0B0F19] drawer-content rounded-t-[32px] border-t border-white/10 h-[80vh] flex flex-col overflow-hidden shadow-2xl hardware-accelerated"
-                            >
-                                {/* Draggable Handle */}
-                                <div className="flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing w-full bg-[#0B0F19]" onPointerDown={() => setIsDragging(true)}>
-                                    <div className="w-12 h-1.5 bg-white/20 rounded-full"></div>
-                                </div>
-
-                                {/* Header */}
-                                <div className="px-6 pt-2 pb-4 border-b border-white/5 flex items-center justify-between bg-[#0B0F19]">
-                                    <div className="flex items-center gap-3">
-                                        {(viewLevel !== 'subs') && (
-                                            <button onClick={goBack} className="p-1 -ml-2 text-muted hover:text-white"><Icon icon="ChevronLeft" size={24} /></button>
-                                        )}
-                                        <div>
-                                            <h2 className="text-xl font-heading font-bold text-white">
-                                                {viewLevel === 'subs' ? category.title :
-                                                    viewLevel === 'brands' ? selectedSub.title :
-                                                        selectedBrand.name}
-                                            </h2>
-                                            <div className="flex items-center gap-2 mt-1">
-                                                <div className="w-1.5 h-1.5 rounded-full bg-neon animate-pulse"></div>
-                                                <p className="text-[10px] text-neon font-medium uppercase tracking-wide">Live Insights & Trends</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <button onClick={onClose} className="p-2 bg-white/5 rounded-full text-muted touch-scale"><Icon icon="X" size={18} /></button>
-                                </div>
-
-                                {/* Content List */}
-                                <div className="flex-1 overflow-y-auto p-4 pb-10 overscroll-contain">
-                                    <h3 className="text-[10px] text-muted font-bold uppercase tracking-widest mb-3 pl-1">
-                                        {viewLevel === 'subs' ? 'Top Niches' : viewLevel === 'brands' ? 'Popular Brands' : 'Top Models'}
-                                    </h3>
-
-                                    <div className="space-y-2 animate-fade-in">
-                                        {viewLevel === 'subs' && (
-                                            subData.length > 0 ? subData.map((sub, i) => (
-                                                <div key={i} onClick={() => handleSubClick(sub)} className="flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/5 active:bg-white/10 transition-colors cursor-pointer group">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="w-1.5 h-1.5 rounded-full bg-white/20 group-hover:bg-neon transition-colors"></div>
-                                                        <span className="text-sm font-medium text-gray-200 group-hover:text-white">{sub.title}</span>
-                                                    </div>
-                                                    <Icon icon="ChevronRight" size={16} className="text-muted" />
-                                                </div>
-                                            )) : <div className="text-center text-muted text-sm py-8">No data yet.</div>
-                                        )}
-
-                                        {viewLevel === 'brands' && (
-                                            selectedSub.brands.map((brand, i) => (
-                                                <div key={i} onClick={() => handleBrandClick(brand)} className="flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/5 active:bg-white/10 transition-colors cursor-pointer group">
-                                                    <span className="text-sm font-medium text-white">{brand.name}</span>
-                                                    <Icon icon="ChevronRight" size={16} className="text-muted" />
-                                                </div>
-                                            ))
-                                        )}
-
-                                        {viewLevel === 'models' && (
-                                            selectedBrand.models.map((model, i) => (
-                                                <div key={i} className="flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/5 active:bg-white/10 transition-colors cursor-pointer">
-                                                    <span className="text-sm font-medium text-white">{model}</span>
-                                                    <span className="text-[10px] text-neon bg-neon/10 px-2 py-1 rounded">View</span>
-                                                </div>
-                                            ))
-                                        )}
-                                    </div>
-                                </div>
-
-                                {/* Footer CTA */}
-                                <div className="p-4 border-t border-white/5 bg-[#0B0F19]">
-                                    <button className="w-full bg-white text-black font-bold py-3.5 rounded-xl text-sm shadow-lg active:scale-95 transition-transform">
-                                        Explore Category Feed
-                                    </button>
-                                </div>
-                            </motion.div>
-                        </>
-                    )}
-                </AnimatePresence>
+                <div
+                    onClick={() => { vibrate(5); onClick(cat); }}
+                    className="rounded-xl flex items-center gap-3.5 p-4 cursor-pointer group transition-all duration-300 hover:translate-y-[-5px] active:translate-y-[-1px] active:shadow-inner"
+                    style={{
+                        backgroundColor: '#161922',
+                        border: '1px solid rgba(255,255,255,0.08)',
+                        borderBottom: '3px solid rgba(0,0,0,0.3)', // Button depth effect
+                        boxShadow: '0 6px 0 rgba(0,0,0,0.2), 0 10px 15px -3px rgba(0,0,0,0.5)',
+                        '--hover-shadow': `0 12px 24px -8px ${color}44`
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.boxShadow = `0 4px 0 rgba(0,0,0,0.3), 0 15px 25px -10px ${color}44`}
+                    onMouseLeave={(e) => e.currentTarget.style.boxShadow = '0 6px 0 rgba(0,0,0,0.2), 0 10px 15px -3px rgba(0,0,0,0.5)'}
+                >
+                    {/* Compact Icon Box (Left) - Enhanced 3D */}
+                    <div
+                        className="w-10 h-10 flex items-center justify-center shrink-0 transition-all duration-300 group-hover:scale-110 group-hover:rotate-3"
+                        style={{
+                            backgroundColor: color,
+                            borderRadius: '10px',
+                            background: `linear-gradient(145deg, ${color} 0%, ${color}DD 100%)`,
+                            boxShadow: `0 4px 12px -2px ${color}88, inset 0 2px 4px rgba(255,255,255,0.3)`
+                        }}
+                    >
+                        <Icon icon={iconName} size={18} className="text-white" />
+                    </div>
+                    {/* Text Content (Right) */}
+                    <div className="flex flex-col min-w-0">
+                        <h3 className="font-semibold text-white text-[13px] tracking-wide truncate">{cat.name || cat.title}</h3>
+                        <span className="text-[10px] text-white/40 font-bold uppercase tracking-tighter">
+                            {cat.posts_count > 0 ? `${cat.posts_count} opinions` : 'Explore'}
+                        </span>
+                    </div>
+                </div>
             );
         };
 
-        const App = () => {
-            const [selectedCategory, setSelectedCategory] = useState(null);
-            const activeTab = 'categories';
+        // SLEEK 3D LIST ITEM FOR "ALL CATEGORIES" (Zoom and Lift animation)
+        const ListItem = ({ cat, onClick }) => {
+            const color = getCategoryColor(cat);
+            // Fix Finance logo missing
+            const iconName = (cat.name || cat.title)?.toLowerCase() === 'finance' ? 'Wallet' : cat.icon;
 
             return (
-                <div className="flex-1 flex flex-col h-full relative">
-
-                    {/* Header (Clean Text Only) */}
-                    <div className="h-[60px] top-nav-glass flex items-center justify-between px-5 sticky top-0 z-30 shrink-0">
-                        <div className="flex items-center gap-3">
-                            <button
-                                onClick={() => {
-                                    triggerAction('openMenu');
-                                }}
-                                className="touch-scale"
-                            >
-                                <Icon icon="Menu" size={22} className="text-white/80" />
-                            </button>
-                            <span className="font-heading font-bold text-lg tracking-wide text-white">Categories</span>
-                        </div>
-                        <button
-                            onClick={() => {
-                                triggerAction('openLens');
+                <div
+                    onClick={() => { vibrate(5); onClick(cat); }}
+                    className="flex items-center justify-between p-3.5 rounded-xl border border-white/[0.05] bg-[#12151C] transition-all duration-300 cursor-pointer group hover:translate-y-[-3px] hover:bg-white/[0.04] hover:shadow-lg"
+                    style={{
+                        boxShadow: '0 4px 6px -1px rgba(0,0,0,0.2)'
+                    }}
+                >
+                    <div className="flex items-center gap-4">
+                        <div
+                            className="w-9 h-9 flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6"
+                            style={{
+                                backgroundColor: color,
+                                borderRadius: '9px',
+                                background: `linear-gradient(145deg, ${color} 0%, ${color}DD 100%)`,
+                                boxShadow: `0 4px 10px -2px ${color}44`
                             }}
-                            className="touch-scale"
                         >
-                            <Icon icon="Search" size={22} className="text-white" />
+                            <Icon icon={iconName} size={16} className="text-white" />
+                        </div>
+                        <span className="text-[14px] font-semibold text-white/90 group-hover:text-white transition-colors">{cat.name || cat.title}</span>
+                        {cat.posts_count > 0 && (
+                            <span className="text-[10px] text-white/30 font-medium ml-2">{cat.posts_count} opinions</span>
+                        )}
+                    </div>
+                    <div className="w-6 h-6 flex items-center justify-center transition-transform duration-300 group-hover:translate-x-1">
+                        <Icon icon="ChevronRight" size={16} className="text-white/20 group-hover:text-white/50" />
+                    </div>
+                </div>
+            );
+        };
+
+        // --- SKELETON LOADERS (Matches exact UI layout) ---
+        const SkeletonCard = () => (
+            <div className="rounded-xl flex items-center gap-3.5 p-4 border border-white/5 bg-white/[0.02] animate-pulse">
+                <div className="w-10 h-10 rounded-lg bg-white/5 shrink-0" />
+                <div className="flex-1 space-y-2">
+                    <div className="h-4 w-2/3 bg-white/5 rounded" />
+                    <div className="h-2 w-1/3 bg-white/5 rounded" />
+                </div>
+            </div>
+        );
+
+        const SkeletonListItem = () => (
+            <div className="flex items-center justify-between p-3.5 rounded-xl border border-white/5 bg-white/[0.01] animate-pulse">
+                <div className="flex items-center gap-4 w-full">
+                    <div className="w-9 h-9 rounded-lg bg-white/5 shrink-0" />
+                    <div className="h-4 w-1/2 bg-white/5 rounded" />
+                </div>
+            </div>
+        );
+
+        const CategorySkeleton = () => (
+            <div className="space-y-10">
+                {/* Popular Skeleton */}
+                <section>
+                    <div className="flex items-center gap-2.5 mb-4 px-1">
+                        <div className="w-1 h-5 bg-white/10 rounded-full" />
+                        <div className="h-4 w-32 bg-white/5 rounded" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                        {[1, 2, 3, 4].map(idx => <SkeletonCard key={idx} />)}
+                    </div>
+                </section>
+                {/* Recommended Skeleton */}
+                <section>
+                    <div className="flex items-center gap-2.5 mb-4 px-1">
+                        <div className="w-1 h-5 bg-white/10 rounded-full" />
+                        <div className="h-4 w-40 bg-white/5 rounded" />
+                    </div>
+                    <div className="h-32 rounded-2xl border border-dashed border-white/10 bg-white/[0.01]" />
+                </section>
+                {/* All Cats Skeleton */}
+                <section>
+                    <div className="flex items-center gap-2.5 mb-4 px-1">
+                        <div className="w-1 h-5 bg-white/10 rounded-full" />
+                        <div className="h-4 w-28 bg-white/5 rounded" />
+                    </div>
+                    <div className="grid grid-cols-1 gap-2.5">
+                        {[1, 2, 3, 4, 5, 6].map(idx => <SkeletonListItem key={idx} />)}
+                    </div>
+                </section>
+            </div>
+        );
+
+
+
+
+        const App = () => {
+            // Removed local selectedCategory state as we redirect immediately
+            const activeTab = 'categories';
+            const [categories, setCategories] = useState([]);
+            const [popularCats, setPopularCats] = useState([]);
+            const [recommendedCats, setRecommendedCats] = useState([]);
+            const [loading, setLoading] = useState(true);
+            const [navVisible, setNavVisible] = useState(true);
+            const lastY = useRef(0);
+
+            const handleScroll = (e) => {
+                const currentY = e.target.scrollTop;
+                const isScrollingDown = currentY > lastY.current;
+
+                if (isScrollingDown && currentY > 50) {
+                    setNavVisible(false);
+                } else if (!isScrollingDown) {
+                    setNavVisible(true);
+                }
+                lastY.current = currentY;
+            };
+
+            const handleCategoryClick = (category) => {
+                vibrate(5);
+                // Direct navigation to homepage with filter - use name for display
+                const catName = (category.name || category.title || category.id)?.toLowerCase().trim();
+                if (catName) {
+                    window.location.href = `HOMEPAGE_FINAL.HTML#category=${encodeURIComponent(catName)}`;
+                }
+            };
+
+
+            useEffect(() => {
+                let isMounted = true;
+                const loadAllData = async () => {
+                    if (!isMounted) return;
+
+                    const cacheKey = 'categories_data';
+
+                    // CACHE-FIRST: Try to load from cache first
+                    if (window.StateManager) {
+                        const cachedData = await window.StateManager.get(cacheKey);
+                        if (cachedData && isMounted) {
+                            console.log('📦 Loading categories from cache');
+                            setCategories(cachedData.all || []);
+                            setPopularCats(cachedData.popular || []);
+                            setRecommendedCats(cachedData.recommended || []);
+                            setLoading(false);
+                            // Continue to fetch fresh data in background
+                        }
+                    }
+
+                    try {
+                        const [all, popular, recommended] = await Promise.all([
+                            window.getCategories().catch(e => { console.warn("getCategories failed", e); return []; }),
+                            window.getPopularCategories(6).catch(e => { console.warn("getPopularCategories failed", e); return []; }),
+                            window.getRecommendedCategories(4).catch(e => { console.warn("getRecommendedCategories failed", e); return []; })
+                        ]);
+
+                        if (isMounted) {
+                            setCategories(all || []);
+                            setPopularCats(popular || []);
+                            setRecommendedCats(recommended || []);
+
+                            // SAVE TO CACHE (10 minute TTL)
+                            if (window.StateManager) {
+                                await window.StateManager.set(cacheKey, {
+                                    all,
+                                    popular,
+                                    recommended
+                                }, { ttl: 10 * 60 * 1000 });
+                                console.log('💾 Saved categories to cache');
+                            }
+                        }
+                    } catch (e) {
+                        console.error("Failed to load categories", e);
+                    } finally {
+                        if (isMounted) setLoading(false);
+                    }
+                };
+                loadAllData();
+                return () => { isMounted = false; };
+            }, []);
+
+            // Setup pull-to-refresh handler
+            useEffect(() => {
+                const setupPullToRefresh = () => {
+                    if (window.PullToRefresh) {
+                        window.PullToRefresh.onRefresh(async () => {
+                            // Invalidate cache
+                            if (window.StateManager) {
+                                window.StateManager.invalidate('categories');
+                            }
+                            // Reload page
+                            window.location.reload();
+                        });
+                    } else {
+                        setTimeout(setupPullToRefresh, 100);
+                    }
+                };
+                setTimeout(setupPullToRefresh, 200);
+            }, []);
+
+            const displayPopular = popularCats.length > 0 ? popularCats : categories.filter(c => c.section === 'popular').slice(0, 6);
+
+            const allCats = React.useMemo(() =>
+                [...categories].sort((a, b) => (a.name || a.title).localeCompare(b.name || b.title)),
+                [categories]
+            );
+
+            return (
+                <div className="flex-1 flex flex-col h-full relative overflow-hidden">
+
+                    {/* Header: Centered & Premium - FIXED */}
+                    <div className={`fixed top-0 left-0 w-full h-[65px] top-nav-glass flex items-center justify-between px-6 z-40 transition-transform duration-500 ease-out ${navVisible ? 'translate-y-0' : '-translate-y-full'}`}>
+                        <button onClick={() => triggerAction('openMenu')} className="touch-scale w-10 h-10 flex items-center justify-start text-white/70 hover:text-white">
+                            <Icon icon="Menu" size={24} />
+                        </button>
+                        <span className="font-heading font-bold text-lg tracking-widest text-white uppercase opacity-95">Categories</span>
+                        <button onClick={() => triggerAction('openLens')} className="touch-scale w-10 h-10 flex items-center justify-end text-white/70 hover:text-white">
+                            <Icon icon="Search" size={22} />
                         </button>
                     </div>
 
-                    {/* Content */}
-                    <div className="flex-1 overflow-y-auto px-4 pt-6 pb-24 no-scrollbar">
+                    {/* Content - FULL SCREEN STRETCH */}
+                    <div className="absolute inset-0 overflow-y-auto px-5 pt-[75px] pb-28 no-scrollbar scroll-smooth" onScroll={handleScroll}>
+                        {loading ? (
+                            <CategorySkeleton />
+                        ) : (
+                            <div className="space-y-10">
+                                {/* 1. POPULAR SECTION */}
+                                {displayPopular.length > 0 && (
+                                    <section className="animate-fade-in">
+                                        <div className="flex items-center justify-between mb-4 px-1">
+                                            <div className="flex items-center gap-2.5">
+                                                <div className="w-1 h-5 bg-neon rounded-full"></div>
+                                                <h2 className="text-sm font-heading font-semibold text-white/90 tracking-tight">Popular Right Now</h2>
+                                            </div>
+                                            <span className="text-[9px] font-medium text-neon/80 bg-neon/10 px-2 py-0.5 rounded-md uppercase tracking-wider">Trending</span>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            {displayPopular.slice(0, 4).map(cat => (
+                                                <CategoryCard key={cat.id} cat={cat} onClick={handleCategoryClick} />
+                                            ))}
+                                        </div>
+                                    </section>
+                                )}
 
-                        {/* 1. POPULAR SECTION */}
-                        <div className="mb-8">
-                            <div className="flex items-center gap-2 mb-4 px-1">
-                                <div className="w-1 h-4 bg-neon rounded-full"></div>
-                                <h2 className="text-sm font-heading font-bold text-white tracking-wide">Popular Categories</h2>
-                            </div>
-                            <div className="grid grid-cols-2 gap-3">
-                                {POPULAR_KEYS.map(key => (
-                                    <CategoryCard key={key} cat={DEEP_DB[key]} onClick={setSelectedCategory} />
-                                ))}
-                            </div>
-                        </div>
+                                {/* 2. RECOMMENDED (FOR YOU) */}
+                                <section className="animate-fade-in" style={{ animationDelay: '0.1s' }}>
+                                    <div className="flex items-center justify-between mb-4 px-1">
+                                        <div className="flex items-center gap-2.5">
+                                            <div className="w-1 h-5 bg-neon rounded-full"></div>
+                                            <h2 className="text-sm font-heading font-semibold text-white/90 tracking-tight">Recommended Categories</h2>
+                                        </div>
+                                    </div>
+                                    <div className="group relative flex flex-col items-center justify-center py-10 px-6 rounded-2xl border border-dashed border-white/10 bg-white/[0.01] transition-all duration-300 hover:bg-white/[0.03] hover:border-neon/30 active:scale-[0.98] cursor-pointer">
+                                        <div className="flex items-center gap-3 mb-2">
+                                            <Icon icon="Sparkles" size={16} className="text-white/40 group-hover:text-neon group-hover:animate-pulse transition-colors" />
+                                            <span className="text-xs font-bold text-white/50 group-hover:text-white uppercase tracking-widest transition-colors">Personalized Recommendations</span>
+                                        </div>
+                                        <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-white/10 bg-white/[0.02] mt-2 transition-all group-hover:border-neon/20 group-hover:bg-neon/5">
+                                            <span className="text-[9px] text-white/40 group-hover:text-neon font-bold uppercase tracking-widest">Post-Beta Feature</span>
+                                        </div>
+                                    </div>
+                                </section>
 
-                        {/* 2. GROWING FAST SECTION */}
-                        <div className="mb-8">
-                            <div className="flex items-center gap-2 mb-4 px-1">
-                                <Icon icon="Trending" size={16} className="text-accent-green" />
-                                <h2 className="text-sm font-heading font-bold text-white tracking-wide">Growing Fast</h2>
+                                {/* 3. ALL CATEGORIES SECTION */}
+                                <section className="animate-fade-in" style={{ animationDelay: '0.2s' }}>
+                                    <div className="flex items-center justify-between mb-4 px-1">
+                                        <div className="flex items-center gap-2.5">
+                                            <div className="w-1 h-5 bg-neon rounded-full"></div>
+                                            <h2 className="text-sm font-heading font-semibold text-white/90 tracking-tight">All Categories</h2>
+                                        </div>
+                                        <Icon icon="Grid" size={14} className="text-muted/40" />
+                                    </div>
+                                    <div className="grid grid-cols-1 gap-2.5">
+                                        {allCats.map(cat => (
+                                            <ListItem key={cat.id} cat={cat} onClick={handleCategoryClick} />
+                                        ))}
+                                    </div>
+                                </section>
                             </div>
-                            {/* FIXED: Consistent padding with pl-1 */}
-                            <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2 -mx-4 px-4 snap-x snap-mandatory">
-                                {GROWING_KEYS.map(key => (
-                                    <CategoryCard key={key} cat={DEEP_DB[key]} type="growing" onClick={setSelectedCategory} />
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* 3. ALL CATEGORIES SECTION */}
-                        <div>
-                            <div className="flex items-center justify-between mb-4 px-1">
-                                <h2 className="text-sm font-heading font-bold text-muted tracking-wide">All Categories</h2>
-                                <Icon icon="Grid" size={14} className="text-muted" />
-                            </div>
-                            <div className="flex flex-col gap-2">
-                                {ALL_KEYS.map(key => (
-                                    <ListItem key={key} cat={DEEP_DB[key]} onClick={setSelectedCategory} />
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Spacer */}
-                        <div className="h-10"></div>
+                        )}
                     </div>
 
-                    <BottomNav activeTab={activeTab} />
+                    {/* 4. Bottom Nav - FIXED */}
+                    <BottomNav activeTab={activeTab} isVisible={navVisible} />
 
-                    {/* Deep Logic Drawer */}
-                    <DeepDrawer
-                        isOpen={!!selectedCategory}
-                        onClose={() => setSelectedCategory(null)}
-                        category={selectedCategory}
+                </div>
+            );
+        };
+
+        const BottomNav = ({ activeTab, isVisible = true }) => {
+            // Initialize with cached value to prevent flicker
+            const [unreadCount, setUnreadCount] = useState(() => {
+                return window.getUnreadCountFromCache ? window.getUnreadCountFromCache() : 0;
+            });
+
+            useEffect(() => {
+                // Subscribe to real-time unread count
+                const unsubscribe = window.subscribeToUnreadCount && window.subscribeToUnreadCount((count) => {
+                    setUnreadCount(count);
+                });
+
+                return () => {
+                    if (unsubscribe && typeof unsubscribe === 'function') unsubscribe();
+                };
+            }, []);
+
+            return (
+                <div className={`nav-glass fixed bottom-0 left-0 w-full h-[65px] px-2 pb-2 flex justify-between items-center z-40 transition-transform duration-500 ease-out ${isVisible ? 'translate-y-0' : 'translate-y-full'}`}>
+                    <NavItem icon="Home" label="Home" isActive={activeTab === 'home'} onClick={() => goTo('HOMEPAGE_FINAL.HTML')} />
+                    <NavItem icon="Grid" label="Categories" isActive={activeTab === 'categories'} onClick={() => { }} />
+                    <NavItem icon="MySpaceLogo" label="My Space" isActive={activeTab === 'myspace'} isMySpace={true} />
+                    <NavItem
+                        icon="Bell"
+                        label="Notifications"
+                        isActive={activeTab === 'notifs'}
+                        onClick={() => goTo('NOTIFICATION PANEL.HTML')}
+                        badge={unreadCount}
                     />
+                    <NavItem icon="User" label="Profile" isActive={activeTab === 'profile'} onClick={() => goTo('PRIVATE OWNER PROFILE.HTML')} />
                 </div>
             );
         };
