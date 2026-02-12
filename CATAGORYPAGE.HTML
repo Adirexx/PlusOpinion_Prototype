@@ -323,7 +323,7 @@
         // 🔗 GLOBAL NAVIGATION FUNCTION (PASTE HERE)
         const goTo = (page) => {
             window.scrollTo(0, 0);
-            window.location.href = page;
+            window.navigateTo(page);
         };
 
         const checkMySpaceRedirect = async () => {
@@ -331,7 +331,7 @@
                 const user = await window.getCurrentUser();
 
                 if (!user) {
-                    window.location.href = 'MY SPACE FINAL (USER).HTML';
+                    window.navigateTo('MY-SPACE-USER.HTML');
                     return;
                 }
                 const { data: profile } = await window.supabase
@@ -341,12 +341,12 @@
                     .single();
 
                 if (profile && profile.is_business_account) {
-                    window.location.href = 'MY SPACE FINAL(COMPANIES).HTML';
+                    window.navigateTo('MY-SPACE-COMPANIES.HTML');
                 } else {
-                    window.location.href = 'MY SPACE FINAL (USER).HTML';
+                    window.navigateTo('MY-SPACE-USER.HTML');
                 }
             } catch (e) {
-                window.location.href = 'MY SPACE FINAL (USER).HTML';
+                window.navigateTo('MY-SPACE-USER.HTML');
             }
         };
 
@@ -356,7 +356,7 @@
                 window.PlusOpinionActions[action]();
             } else {
                 // On another page → redirect with hash
-                window.location.href = `HOMEPAGE_FINAL.HTML#${action.replace('open', '').toLowerCase()}`;
+                window.navigateTo(`HOMEPAGE_FINAL.HTML#${action.replace('open', '').toLowerCase()}`);
             }
         }
 
@@ -364,7 +364,7 @@
             if (window.PlusOpinionActions?.[action]) {
                 window.PlusOpinionActions[action]();
             } else {
-                window.location.href = `HOMEPAGE_FINAL.HTML#${action.replace('open', '').toLowerCase()}`;
+                window.navigateTo(`HOMEPAGE_FINAL.HTML#${action.replace('open', '').toLowerCase()}`);
             }
         };
 
@@ -372,9 +372,9 @@
         const PAGE_TAB_MAP = {
             'HOMEPAGE_FINAL.HTML': 'home',
             'CATAGORYPAGE.HTML': 'categories',
-            'MY SPACE FINAL (USER).HTML': 'myspace',
-            'NOTIFICATION PANEL.HTML': 'notifs',
-            'PRIVATE OWNER PROFILE.HTML': 'profile'
+            'MY-SPACE-USER.HTML': 'myspace',
+            'NOTIFICATION-PANEL.HTML': 'notifs',
+            'PRIVATE-OWNER-PROFILE.HTML': 'profile'
         };
 
         // --- ICONS ---
@@ -752,7 +752,7 @@
                 // Direct navigation to homepage with filter - use name for display
                 const catName = (category.name || category.title || category.id)?.toLowerCase().trim();
                 if (catName) {
-                    window.location.href = `HOMEPAGE_FINAL.HTML#category=${encodeURIComponent(catName)}`;
+                    window.navigateTo(`HOMEPAGE_FINAL.HTML#category=${encodeURIComponent(catName)}`);
                 }
             };
 
@@ -944,10 +944,10 @@
                         icon="Bell"
                         label="Notifications"
                         isActive={activeTab === 'notifs'}
-                        onClick={() => goTo('NOTIFICATION PANEL.HTML')}
+                        onClick={() => goTo('NOTIFICATION-PANEL.HTML')}
                         badge={unreadCount}
                     />
-                    <NavItem icon="User" label="Profile" isActive={activeTab === 'profile'} onClick={() => goTo('PRIVATE OWNER PROFILE.HTML')} />
+                    <NavItem icon="User" label="Profile" isActive={activeTab === 'profile'} onClick={() => goTo('PRIVATE-OWNER-PROFILE.HTML')} />
                 </div>
             );
         };
