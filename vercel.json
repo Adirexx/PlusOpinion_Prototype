@@ -1,6 +1,4 @@
 {
-    "buildCommand": "node build-version.js",
-    "outputDirectory": ".",
     "headers": [
         {
             "source": "/service-worker.js",
@@ -22,6 +20,15 @@
         },
         {
             "source": "/(.*).html",
+            "headers": [
+                {
+                    "key": "Cache-Control",
+                    "value": "public, max-age=0, must-revalidate"
+                }
+            ]
+        },
+        {
+            "source": "/(.*).HTML",
             "headers": [
                 {
                     "key": "Cache-Control",
