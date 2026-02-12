@@ -78,26 +78,6 @@
             "destination": "/CATAGORYPAGE.HTML"
         },
         {
-            "source": "/myspace",
-            "destination": "/MY SPACE FINAL (USER).HTML"
-        },
-        {
-            "source": "/workspace",
-            "destination": "/MY SPACE FINAL(COMPANIES).HTML"
-        },
-        {
-            "source": "/notifications",
-            "destination": "/NOTIFICATION PANEL.HTML"
-        },
-        {
-            "source": "/myprofile",
-            "destination": "/PRIVATE OWNER PROFILE.HTML"
-        },
-        {
-            "source": "/profile",
-            "destination": "/PUBLIC POV PROFILE.HTML"
-        },
-        {
             "source": "/onboarding",
             "destination": "/onboarding.html"
         },
