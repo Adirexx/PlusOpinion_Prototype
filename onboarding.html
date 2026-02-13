@@ -218,7 +218,7 @@
                     // If profile is already completed, redirect to homepage
                     if (profile?.profile_completed && profile?.terms_accepted) {
                         console.log('Profile already completed, redirecting to homepage...');
-                        window.location.href = 'HOMEPAGE_FINAL.HTML';
+                        window.navigateTo('HOMEPAGE_FINAL.HTML');
                         return;
                     }
 
@@ -439,7 +439,7 @@
                     }
 
                     // Redirect to homepage
-                    window.location.href = 'HOMEPAGE_FINAL.HTML';
+                    window.navigateTo('HOMEPAGE_FINAL.HTML');
                 } catch (error) {
                     console.error('Error updating profile:', error);
                     alert('Failed to complete profile. Please try again.');
