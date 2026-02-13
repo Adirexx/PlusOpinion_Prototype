@@ -312,7 +312,7 @@
                     .single();
 
                 if (profile && profile.is_business_account) {
-                    window.location.href = 'MY_SPACE_COMPANIES.HTML';
+                    window.location.href = 'MY-SPACE-COMPANIES.HTML';
                 } else {
                     window.location.href = 'MY-SPACE-USER.HTML';
                 }
@@ -343,9 +343,9 @@
         const PAGE_TAB_MAP = {
             'HOMEPAGE_FINAL.HTML': 'home',
             'CATAGORYPAGE.HTML': 'categories',
-            'MY_SPACE_USER.HTML': 'myspace',
-            'NOTIFICATION_PANEL.HTML': 'notifs',
-            'PRIVATE_OWNER_PROFILE.HTML': 'profile'
+            'MY-SPACE-USER.HTML': 'myspace',
+            'NOTIFICATION-PANEL.HTML': 'notifs',
+            'PRIVATE-OWNER-PROFILE.HTML': 'profile'
         };
 
         // --- ICONS ---
@@ -500,15 +500,15 @@
                 e.stopPropagation();
                 const getPath = (p) => window.RouteCleaner ? window.RouteCleaner.getCleanPath(p) : p;
                 if (data.actor_id) {
-                    window.location.href = `${getPath('PUBLIC_POV_PROFILE.HTML')}?id=${data.actor_id}`;
+                    window.location.href = `${getPath('PUBLIC-POV-PROFILE.HTML')}?id=${data.actor_id}`;
                 } else if (data.metadata?.company_id) {
                     window.location.href = `${getPath('COMPANY PROFILE.HTML')}?id=${data.metadata.company_id}`;
                 } else if (data.category === 'revenue') {
-                    window.location.href = `${getPath('MY_SPACE_USER.HTML')}#revenue`;
+                    window.location.href = `${getPath('MY-SPACE-USER.HTML')}#revenue`;
                 } else if (data.category === 'security') {
-                    window.location.href = `${getPath('PRIVATE_OWNER_PROFILE.HTML')}#security`;
+                    window.location.href = `${getPath('PRIVATE-OWNER-PROFILE.HTML')}#security`;
                 } else if (data.type === 'rqs_updated') {
-                    window.location.href = `${getPath('MY_SPACE_USER.HTML')}#rqs`;
+                    window.location.href = `${getPath('MY-SPACE-USER.HTML')}#rqs`;
                 }
             };
 
@@ -811,7 +811,7 @@
                                             className={`text-[14px] leading-tight cursor-pointer hover:text-neon transition-colors ${data.unread ? 'text-white font-bold' : 'text-slate-300 font-semibold'}`}
                                             onClick={(e) => {
                                                 e.stopPropagation();
-                                                window.location.href = `PUBLIC_POV_PROFILE.HTML?id=${data.actor_id}`;
+                                                window.location.href = `PUBLIC-POV-PROFILE.HTML?id=${data.actor_id}`;
                                             }}
                                         >
                                             {title}
@@ -935,7 +935,7 @@
                             // Already on page, maybe scroll top or refresh?
                         }}
                     />
-                    <NavItem icon="User" label="Profile" isActive={activeTab === 'profile'} onClick={() => goTo('PRIVATE_OWNER_PROFILE.HTML')} />
+                    <NavItem icon="User" label="Profile" isActive={activeTab === 'profile'} onClick={() => goTo('PRIVATE-OWNER-PROFILE.HTML')} />
                 </div>
             );
         };
