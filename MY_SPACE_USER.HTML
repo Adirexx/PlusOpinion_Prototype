@@ -396,9 +396,9 @@
         const PAGE_TAB_MAP = {
             'HOMEPAGE_FINAL.HTML': 'home',
             'CATAGORYPAGE.HTML': 'categories',
-            'MY-SPACE-USER.HTML': 'myspace',
-            'NOTIFICATION-PANEL.HTML': 'notifs',
-            'PRIVATE-OWNER-PROFILE.HTML': 'profile'
+            'MY_SPACE_USER.HTML': 'myspace',
+            'NOTIFICATION_PANEL.HTML': 'notifs',
+            'PRIVATE_OWNER_PROFILE.HTML': 'profile'
         };
 
         // --- ICONS ---
@@ -1537,12 +1537,12 @@
                                 <img
                                     src={post.avatar || DEFAULT_AVATAR}
                                     className="w-8 h-8 rounded-full object-cover cursor-pointer active:scale-95 transition-transform"
-                                    onClick={() => { window.location.href = `PUBLIC-POV-PROFILE.HTML?id=${post.user_id || 'me'}`; }}
+                                    onClick={() => { window.location.href = `PUBLIC_POV_PROFILE.HTML?id=${post.user_id || 'me'}`; }}
                                 />
                                 <div>
                                     <div
                                         className="text-white text-sm font-bold cursor-pointer hover:text-neon transition-colors"
-                                        onClick={() => { window.location.href = `PUBLIC-POV-PROFILE.HTML?id=${post.user_id || 'me'}`; }}
+                                        onClick={() => { window.location.href = `PUBLIC_POV_PROFILE.HTML?id=${post.user_id || 'me'}`; }}
                                     >
                                         {post.name}
                                     </div>
@@ -2132,10 +2132,10 @@
                             icon="Bell"
                             label="Notifications"
                             isActive={activeTab === 'notifs'}
-                            onClick={() => goTo('NOTIFICATION-PANEL.HTML')}
+                            onClick={() => goTo('NOTIFICATION_PANEL.HTML')}
                             badge={unreadCount} // Pass unread count
                         />
-                        <NavItem icon="User" label="Profile" isActive={activeTab === 'profile'} onClick={() => goTo('PRIVATE-OWNER-PROFILE.HTML')} />
+                        <NavItem icon="User" label="Profile" isActive={activeTab === 'profile'} onClick={() => goTo('PRIVATE_OWNER_PROFILE.HTML')} />
                     </div>
                 );
             };
