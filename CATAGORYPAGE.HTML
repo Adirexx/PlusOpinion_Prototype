@@ -331,7 +331,7 @@
                 const user = await window.getCurrentUser();
 
                 if (!user) {
-                    window.location.href = 'MY-SPACE-USER.HTML';
+                    window.location.href = 'MY_SPACE_USER.HTML';
                     return;
                 }
                 const { data: profile } = await window.supabase
@@ -341,12 +341,12 @@
                     .single();
 
                 if (profile && profile.is_business_account) {
-                    window.location.href = 'MY-SPACE-COMPANIES.HTML';
+                    window.location.href = 'MY_SPACE_COMPANIES.HTML';
                 } else {
-                    window.location.href = 'MY-SPACE-USER.HTML';
+                    window.location.href = 'MY_SPACE_USER.HTML';
                 }
             } catch (e) {
-                window.location.href = 'MY-SPACE-USER.HTML';
+                window.location.href = 'MY_SPACE_USER.HTML';
             }
         };
 
@@ -372,9 +372,9 @@
         const PAGE_TAB_MAP = {
             'HOMEPAGE_FINAL.HTML': 'home',
             'CATAGORYPAGE.HTML': 'categories',
-            'MY-SPACE-USER.HTML': 'myspace',
-            'NOTIFICATION-PANEL.HTML': 'notifs',
-            'PRIVATE-OWNER-PROFILE.HTML': 'profile'
+            'MY_SPACE_USER.HTML': 'myspace',
+            'NOTIFICATION_PANEL.HTML': 'notifs',
+            'PRIVATE_OWNER_PROFILE.HTML': 'profile'
         };
 
         // --- ICONS ---
@@ -944,10 +944,10 @@
                         icon="Bell"
                         label="Notifications"
                         isActive={activeTab === 'notifs'}
-                        onClick={() => goTo('NOTIFICATION-PANEL.HTML')}
+                        onClick={() => goTo('NOTIFICATION_PANEL.HTML')}
                         badge={unreadCount}
                     />
-                    <NavItem icon="User" label="Profile" isActive={activeTab === 'profile'} onClick={() => goTo('PRIVATE-OWNER-PROFILE.HTML')} />
+                    <NavItem icon="User" label="Profile" isActive={activeTab === 'profile'} onClick={() => goTo('PRIVATE_OWNER_PROFILE.HTML')} />
                 </div>
             );
         };
