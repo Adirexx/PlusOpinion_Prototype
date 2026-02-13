@@ -539,7 +539,7 @@ window.notifyProfileVerified = async function (userId) {
             metadata: {
                 badge: 'verified'
             },
-            action_url: 'PRIVATE OWNER PROFILE.HTML',
+            action_url: 'PRIVATE_OWNER_PROFILE.HTML',
             icon: 'Shield',
             category: 'system',
             priority: 'high'
@@ -566,7 +566,7 @@ window.notifyRQSUpdated = async function (userId, oldScore, newScore) {
                 new_score: newScore,
                 level: level || '1'
             },
-            action_url: 'PRIVATE OWNER PROFILE.HTML#rqs',
+            action_url: 'PRIVATE_OWNER_PROFILE.HTML#rqs',
             icon: 'Zap',
             category: 'system',
             priority: 'normal'
@@ -1140,7 +1140,7 @@ window.notifyProfileIncomplete = async function (userId, missingFields, rqsBoost
                 potential_boost: boost,
                 completion_percentage: Math.max(0, 100 - (missingFields.length * 20))
             },
-            action_url: 'PRIVATE OWNER PROFILE.HTML?edit=true',
+            action_url: 'PRIVATE_OWNER_PROFILE.HTML?edit=true',
             icon: 'User',
             category: 'system',
             priority: 'normal'
@@ -1194,7 +1194,7 @@ window.notifyRQSMilestone = async function (userId, milestone, currentScore) {
                 current_score: currentScore,
                 next_milestone: milestone < 100 ? Math.min(milestone + 25, 100) : 100
             },
-            action_url: 'MY SPACE FINAL (USER).HTML?view=rqs',
+            action_url: 'MY_SPACE_USER.HTML?view=rqs',
             icon: 'Award',
             category: 'achievement',
             priority: 'high'
@@ -1234,7 +1234,7 @@ window.notifyPartnerProgress = async function (userId, currentProgress, breakdow
                 streak_progress: streakProgress,
                 focus_area: focusArea
             },
-            action_url: 'MY SPACE FINAL (USER).HTML?view=monetization',
+            action_url: 'MY_SPACE_USER.HTML?view=monetization',
             icon: 'TrendingUp',
             category: 'monetization',
             priority: 'normal'
