@@ -568,7 +568,7 @@
 
         const goTo = (page) => {
             window.scrollTo(0, 0);
-            window.navigateTo(page);
+            window.location.href = page;
         };
 
         const checkMySpaceRedirect = async () => {
@@ -576,7 +576,7 @@
                 const user = await window.getCurrentUser();
 
                 if (!user) {
-                    window.navigateTo('MY-SPACE-USER.HTML');
+                    window.location.href = 'MY-SPACE-USER.HTML';
                     return;
                 }
                 const { data: profile } = await window.supabase
@@ -586,12 +586,12 @@
                     .single();
 
                 if (profile && profile.is_business_account) {
-                    window.navigateTo('MY-SPACE-COMPANIES.HTML');
+                    window.location.href = 'MY-SPACE-COMPANIES.HTML';
                 } else {
-                    window.navigateTo('MY-SPACE-USER.HTML');
+                    window.location.href = 'MY-SPACE-USER.HTML';
                 }
             } catch (e) {
-                window.navigateTo('MY-SPACE-USER.HTML');
+                window.location.href = 'MY-SPACE-USER.HTML';
             }
         };
 
@@ -898,13 +898,13 @@
                     <div className="flex-shrink-0">
                         <div
                             className="flex-shrink-0 cursor-pointer active:scale-95 transition-transform"
-                            onClick={() => { vibrate(5); if (comment.user_id) window.navigateTo(`PUBLIC-POV-PROFILE.HTML?id=${comment.user_id}`); }}
+                            onClick={() => { vibrate(5); if (comment.user_id) window.location.href = `PUBLIC-POV-PROFILE.HTML?id=${comment.user_id}`; }}
                         >
                             <Avatar
                                 src={comment.avatar}
                                 className="w-6 h-6 rounded-full border border-white/10 shrink-0 object-cover cursor-pointer"
                                 fallbackSize={12}
-                                onClick={() => { vibrate(); if (comment.user_id) window.navigateTo(`PUBLIC-POV-PROFILE.HTML?id=${comment.user_id}`); }}
+                                onClick={() => { vibrate(); if (comment.user_id) window.location.href = `PUBLIC-POV-PROFILE.HTML?id=${comment.user_id}`; }}
                             />
                         </div>
                     </div>
@@ -912,7 +912,7 @@
                         <div className="flex items-baseline justify-between focus-within:ring-0">
                             <div
                                 className="flex items-baseline gap-2 cursor-pointer group/name"
-                                onClick={() => { vibrate(5); if (comment.user_id) window.navigateTo(`PUBLIC-POV-PROFILE.HTML?id=${comment.user_id}`); }}
+                                onClick={() => { vibrate(5); if (comment.user_id) window.location.href = `PUBLIC-POV-PROFILE.HTML?id=${comment.user_id}`; }}
                             >
                                 <span className="font-bold text-white text-xs group-hover/name:text-neon transition-colors">{comment.user}</span>
                                 <span className="text-[10px] text-muted">{comment.time}</span>
@@ -1325,7 +1325,7 @@
                         <div className="flex gap-3 w-full">
                             <div
                                 className="group relative cursor-pointer active:scale-95 transition-transform"
-                                onClick={() => { vibrate(5); window.navigateTo(`PUBLIC-POV-PROFILE.HTML?id=${post.user_id || post.profiles?.id}`); }}
+                                onClick={() => { vibrate(5); window.location.href = `PUBLIC-POV-PROFILE.HTML?id=${post.user_id || post.profiles?.id}`; }}
                             >
                                 {post.avatar ? (
                                     <Avatar
@@ -1343,14 +1343,14 @@
                                 <div className="flex items-center gap-2">
                                     <div
                                         className="group relative cursor-pointer hover:text-neon transition-colors"
-                                        onClick={() => { vibrate(5); window.navigateTo(`PUBLIC-POV-PROFILE.HTML?id=${post.user_id || post.profiles?.id}`); }}
+                                        onClick={() => { vibrate(5); window.location.href = `PUBLIC-POV-PROFILE.HTML?id=${post.user_id || post.profiles?.id}`; }}
                                     >
                                         <span className="font-heading font-bold text-white text-sm truncate">{post.name}</span>
                                         <span className="delayed-label absolute bottom-6 left-0 bg-black/80 border border-white/10 text-[10px] text-white px-2 py-1 rounded whitespace-nowrap shadow-lg">View Profile</span>
                                     </div>
                                     <div
                                         className="group relative rqs-pill px-2 py-0.5 rounded-full flex items-center shrink-0 cursor-pointer"
-                                        onClick={() => { vibrate(5); window.navigateTo(`PUBLIC-POV-PROFILE.HTML?id=${post.user_id || post.profiles?.id}`); }}
+                                        onClick={() => { vibrate(5); window.location.href = `PUBLIC-POV-PROFILE.HTML?id=${post.user_id || post.profiles?.id}`; }}
                                     >
                                         <span className="font-heading font-bold text-[9px] text-white tracking-wide">RQS {post.rqs}</span>
                                         <span className="delayed-label absolute bottom-6 left-1/2 -translate-x-1/2 bg-black/80 border border-white/10 text-[10px] text-white px-2 py-1 rounded whitespace-nowrap shadow-lg">Review Quality Score</span>
@@ -1358,7 +1358,7 @@
                                 </div>
                                 <div
                                     className="group relative inline-block cursor-pointer"
-                                    onClick={() => { vibrate(5); window.navigateTo(`PUBLIC-POV-PROFILE.HTML?id=${post.user_id || post.profiles?.id}`); }}
+                                    onClick={() => { vibrate(5); window.location.href = `PUBLIC-POV-PROFILE.HTML?id=${post.user_id || post.profiles?.id}`; }}
                                 >
                                     <div className="text-xs text-muted truncate hover:text-white transition-colors">@{post.username}</div>
                                     <span className="delayed-label absolute top-5 left-0 bg-black/80 border border-white/10 text-[10px] text-white px-2 py-1 rounded whitespace-nowrap shadow-lg">View Profile</span>
@@ -2020,7 +2020,7 @@
                                                 e.stopPropagation();
                                                 vibrate(5);
                                                 console.log('Navigating to profile:', reviewer.id);
-                                                window.navigateTo(`PUBLIC-POV-PROFILE.HTML?id=${reviewer.id}`);
+                                                window.location.href = `PUBLIC-POV-PROFILE.HTML?id=${reviewer.id}`;
                                             }}
                                         >
                                             <div className="relative pointer-events-none">
@@ -2063,7 +2063,7 @@
                                         <div
                                             key={profile.id}
                                             className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/5 hover:border-neon/30 transition-all cursor-pointer active:scale-[0.98]"
-                                            onClick={() => { vibrate(5); window.navigateTo(`PUBLIC-POV-PROFILE.HTML?id=${profile.id}`); }}
+                                            onClick={() => { vibrate(5); window.location.href = `PUBLIC-POV-PROFILE.HTML?id=${profile.id}`; }}
                                         >
                                             <Avatar
                                                 src={profile.avatar_url}
@@ -2152,7 +2152,7 @@
                                     className="bg-white/5 border border-white/10 rounded-xl p-4 cursor-pointer hover:bg-white/10 hover:border-neon/50 transition-all active:scale-95"
                                     onClick={() => {
                                         vibrate(5);
-                                        window.navigateTo(`PUBLIC-POV-PROFILE.HTML?id=${profile.id}`);
+                                        window.location.href = `PUBLIC-POV-PROFILE.HTML?id=${profile.id}`;
                                     }}
                                 >
                                     <div className="flex flex-col items-center gap-2">
