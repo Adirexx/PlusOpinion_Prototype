@@ -104,7 +104,7 @@ setTimeout(() => {
     const commonPages = [
         'HOMEPAGE_FINAL.HTML',
         'BOOKMARKS.HTML',
-        'NOTIFICATION-PANEL.HTML'
+        'NOTIFICATION_PANEL.HTML'
     ];
 
     commonPages.forEach(page => {
