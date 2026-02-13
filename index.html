@@ -131,7 +131,7 @@
                     email,
                     password,
                     options: {
-                        emailRedirectTo: window.location.origin + '/HOMEPAGE_FINAL.HTML',
+                        emailRedirectTo: window.location.origin + '/feed.html',
                         data: { full_name: name }
                     }
                 });
@@ -173,7 +173,7 @@
                     const { data, error } = await supabase.auth.signInWithOAuth({
                         provider: provider,
                         options: {
-                            redirectTo: window.location.origin + '/HOMEPAGE_FINAL.HTML'
+                            redirectTo: window.location.origin + '/feed.html'
                         }
                     });
 
@@ -1035,7 +1035,7 @@
                     if (userOnboardingStatus) {
                         window.location.href = './onboarding.html';
                     } else {
-                        window.navigateTo('HOMEPAGE_FINAL.HTML');
+                        window.navigateTo('feed.html');
                     }
                 } else {
                     alert("Invalid Access Code. Access Blocked.");
@@ -1263,7 +1263,7 @@
                         const user = await window.getCurrentUser();
                         if (user) {
                             // User is logged in, redirect to homepage (session already persisted by Supabase)
-                            window.location.replace('HOMEPAGE_FINAL.HTML');
+                            window.location.replace('feed.html');
                         }
                     } catch (error) {
                         console.log('No active session');
