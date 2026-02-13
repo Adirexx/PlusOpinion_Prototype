@@ -79,23 +79,23 @@
         },
         {
             "source": "/myspace",
-            "destination": "/MY-SPACE-USER.HTML"
+            "destination": "/MY_SPACE_USER.HTML"
         },
         {
             "source": "/workspace",
-            "destination": "/MY-SPACE-COMPANIES.HTML"
+            "destination": "/MY_SPACE_COMPANIES.HTML"
         },
         {
             "source": "/notifications",
-            "destination": "/NOTIFICATION-PANEL.HTML"
+            "destination": "/NOTIFICATION_PANEL.HTML"
         },
         {
             "source": "/myprofile",
-            "destination": "/PRIVATE-OWNER-PROFILE.HTML"
+            "destination": "/PRIVATE_OWNER_PROFILE.HTML"
         },
         {
             "source": "/profile",
-            "destination": "/PUBLIC-POV-PROFILE.HTML"
+            "destination": "/PUBLIC_POV_PROFILE.HTML"
         },
         {
             "source": "/onboarding",
