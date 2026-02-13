@@ -209,21 +209,21 @@ class RouteCleaner {
     constructor() {
         this.mapping = {
             '/index.html': '/',
-            '/HOMEPAGE_FINAL.HTML': '/feed',
-            '/BOOKMARKS.HTML': '/bookmarks',
-            '/CATAGORYPAGE.HTML': '/categories',
-            '/MY_SPACE_USER.HTML': '/myspace',
-            '/MY_SPACE_COMPANIES.HTML': '/workspace',
-            '/NOTIFICATION_PANEL.HTML': '/notifications',
-            '/PRIVATE_OWNER_PROFILE.HTML': '/myprofile',
-            '/PUBLIC_POV_PROFILE.HTML': '/profile',
+            '/feed.html': '/feed',
+            '/bookmarks.html': '/bookmarks',
+            '/categories.html': '/categories',
+            '/myspace.html': '/myspace',
+            '/workspace.html': '/workspace',
+            '/notifications.html': '/notifications',
+            '/myprofile.html': '/myprofile',
+            '/profile.html': '/profile',
             '/onboarding.html': '/onboarding',
             '/reset-password.html': '/reset-password',
             '/change-password.html': '/change-password',
-            '/ABOUT.HTML': '/about',
-            '/SUPPORT.HTML': '/support',
-            '/PRIVACY_POLICY.HTML': '/privacy-policy',
-            '/TERMS_AND_CONDITIONS.HTML': '/terms-and-conditions'
+            '/about.html': '/about',
+            '/support.html': '/support',
+            '/privacy-policy.html': '/privacy-policy',
+            '/terms-and-conditions.html': '/terms-and-conditions'
         };
 
         // Create reverse mapping for lookup
