@@ -323,7 +323,7 @@
         // 🔗 GLOBAL NAVIGATION FUNCTION (PASTE HERE)
         const goTo = (page) => {
             window.scrollTo(0, 0);
-            window.navigateTo(page);
+            window.location.href = page;
         };
 
         const checkMySpaceRedirect = async () => {
@@ -331,7 +331,7 @@
                 const user = await window.getCurrentUser();
 
                 if (!user) {
-                    window.navigateTo('MY-SPACE-USER.HTML');
+                    window.location.href = 'MY-SPACE-USER.HTML';
                     return;
                 }
                 const { data: profile } = await window.supabase
@@ -341,12 +341,12 @@
                     .single();
 
                 if (profile && profile.is_business_account) {
-                    window.navigateTo('MY-SPACE-COMPANIES.HTML');
+                    window.location.href = 'MY-SPACE-COMPANIES.HTML';
                 } else {
-                    window.navigateTo('MY-SPACE-USER.HTML');
+                    window.location.href = 'MY-SPACE-USER.HTML';
                 }
             } catch (e) {
-                window.navigateTo('MY-SPACE-USER.HTML');
+                window.location.href = 'MY-SPACE-USER.HTML';
             }
         };
 
@@ -356,7 +356,7 @@
                 window.PlusOpinionActions[action]();
             } else {
                 // On another page → redirect with hash
-                window.navigateTo(`HOMEPAGE_FINAL.HTML#${action.replace('open', '').toLowerCase()}`);
+                window.location.href = `HOMEPAGE_FINAL.HTML#${action.replace('open', '').toLowerCase()}`;
             }
         }
 
@@ -364,7 +364,7 @@
             if (window.PlusOpinionActions?.[action]) {
                 window.PlusOpinionActions[action]();
             } else {
-                window.navigateTo(`HOMEPAGE_FINAL.HTML#${action.replace('open', '').toLowerCase()}`);
+                window.location.href = `HOMEPAGE_FINAL.HTML#${action.replace('open', '').toLowerCase()}`;
             }
         };
 
@@ -752,7 +752,7 @@
                 // Direct navigation to homepage with filter - use name for display
                 const catName = (category.name || category.title || category.id)?.toLowerCase().trim();
                 if (catName) {
-                    window.navigateTo(`HOMEPAGE_FINAL.HTML#category=${encodeURIComponent(catName)}`);
+                    window.location.href = `HOMEPAGE_FINAL.HTML#category=${encodeURIComponent(catName)}`;
                 }
             };
 
