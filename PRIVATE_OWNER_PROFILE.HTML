@@ -410,7 +410,7 @@
                     .single();
 
                 if (profile && profile.is_business_account) {
-                    window.location.href = 'MY-SPACE-COMPANIES.HTML';
+                    window.location.href = 'MY_SPACE_COMPANIES.HTML';
                 } else {
                     window.location.href = 'MY-SPACE-USER.HTML';
                 }
@@ -441,9 +441,9 @@
         const PAGE_TAB_MAP = {
             'HOMEPAGE_FINAL.HTML': 'home',
             'CATAGORYPAGE.HTML': 'categories',
-            'MY-SPACE-USER.HTML': 'myspace',
-            'NOTIFICATION-PANEL.HTML': 'notifs',
-            'PRIVATE-OWNER-PROFILE.HTML': 'profile'
+            'MY_SPACE_USER.HTML': 'myspace',
+            'NOTIFICATION_PANEL.HTML': 'notifs',
+            'PRIVATE_OWNER_PROFILE.HTML': 'profile'
         };
 
         // --- ICONS ---
@@ -721,7 +721,7 @@
                         label="Notifications"
                         isActive={activeTab === 'notifs'}
                         badge={unreadCount}
-                        onClick={() => goTo('NOTIFICATION-PANEL.HTML')}
+                        onClick={() => goTo('NOTIFICATION_PANEL.HTML')}
                     />
                     <NavItem icon="User" label="Profile" isActive={activeTab === 'profile'} onClick={() => { }} />
                 </div>
@@ -2418,7 +2418,7 @@
                     'insights': 'insights'
                 };
                 const view = viewMap[section] || 'dashboard';
-                window.location.href = `MY-SPACE-USER.HTML?view=${view}`;
+                window.location.href = `MY_SPACE_USER.HTML?view=${view}`;
             };
 
             // SWIPE LOGIC FIXED
