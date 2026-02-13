@@ -1,149 +1,288 @@
-/**
- * Authentication Guard for PlusOpinion
- * 
- * This module provides universal onboarding status checking.
- * Ensures NO user can access the platform without completing:
- * 1. Terms & Conditions acceptance
- * 2. Profile setup (username, full name, bio, avatar)
- * 
- * Usage: Import this file on any protected page
- */
+// Use the Supabase client initialized from the UMD bundle
+// The supabase.js module script initializes window.supabase
+const supabase = window.supabase;
 
-/**
- * Check if user has completed full onboarding
- * Redirects to appropriate page if not
- * 
- * @returns {Promise<boolean>} true if onboarding complete, false if redirected
- */
-window.checkOnboardingStatus = async function () {
-    try {
-        // 1. Check if user is logged in
-        const user = await window.getCurrentUser();
-
-        if (!user) {
-            // Not logged in → redirect to landing page
-            console.warn('⚠️ No user session - redirecting to login');
-            window.location.href = 'index.html';
-            return false;
-        }
-
-        // 2. Check onboarding status in database
-        const { data: profile, error } = await window.supabase
-            .from('profiles')
-            .select('terms_accepted, profile_completed, username, full_name')
-            .eq('id', user.id)
-            .single();
-
-        if (error) {
-            console.error('❌ Error checking profile:', error);
-            // If profile doesn't exist, redirect to onboarding
-            window.location.href = 'onboarding.html';
-            return false;
-        }
-
-        if (!profile) {
-            console.warn('⚠️ No profile found - redirecting to onboarding');
-            window.location.href = 'onboarding.html';
-            return false;
-        }
-
-        // 3. Check if onboarding is complete
-        const onboardingComplete = profile.terms_accepted === true
-            && profile.profile_completed === true
-            && profile.username !== null
-            && profile.username !== ''
-            && profile.full_name !== null
-            && profile.full_name !== '';
-
-        if (!onboardingComplete) {
-            console.warn('⚠️ Onboarding incomplete - redirecting to onboarding');
-            console.log('Onboarding status:', {
-                terms_accepted: profile.terms_accepted,
-                profile_completed: profile.profile_completed,
-                has_username: !!profile.username,
-                has_full_name: !!profile.full_name
-            });
-            window.location.href = 'onboarding.html';
-            return false;
-        }
-
-        // ✅ All checks passed - onboarding is complete
-        console.log('✅ Onboarding complete - access granted');
-        return true;
-
-    } catch (err) {
-        console.error('❌ Error in onboarding check:', err);
-        // On error, redirect to onboarding to be safe
-        window.location.href = 'onboarding.html';
-        return false;
+/* ============================
+   SIGN UP (Email + Pasword)
+============================ */
+async function signUpUser(email, password, name) {
+  // 1. Create auth user
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      emailRedirectTo: window.location.origin + '/HOMEPAGE_FINAL.HTML',
+      data: {
+        full_name: name
+      }
     }
-};
+  });
 
-/**
- * Check if user has accepted terms (for onboarding page flow)
- * @returns {Promise<boolean>}
- */
-window.hasAcceptedTerms = async function () {
+  if (error) throw error;
+
+  const user = data.user;
+
+  // 2. Store extra data in profiles table (optional - won't fail if table doesn't exist)
+  if (user) {
     try {
-        const user = await window.getCurrentUser();
-        if (!user) return false;
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .insert({
+          id: user.id,
+          email: user.email,
+          full_name: name
+        });
 
-        const { data: profile } = await window.supabase
-            .from('profiles')
-            .select('terms_accepted')
-            .eq('id', user.id)
-            .single();
-
-        return profile?.terms_accepted === true;
-    } catch (err) {
-        console.error('Error checking terms acceptance:', err);
-        return false;
+      // Log profile error but don't throw - signup should still succeed
+      if (profileError) {
+        console.warn('Profile creation skipped:', profileError.message);
+      }
+    } catch (profileError) {
+      // Silently handle profile creation errors
+      console.warn('Profile table not available:', profileError);
     }
-};
+  }
 
-/**
- * Mark terms as accepted
- * @param {string} userId 
- * @returns {Promise<boolean>}
- */
-window.acceptTerms = async function (userId) {
-    try {
-        const { error } = await window.supabase
-            .from('profiles')
-            .update({ terms_accepted: true })
-            .eq('id', userId);
+  return user;
+}
 
-        if (error) throw error;
+/* ============================
+   SIGN IN (Email + Password)
+============================ */
+async function signInUser(email, password, disableAutoRedirect = false) {
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password
+  });
 
-        // Terms accepted for user
-        return true;
-    } catch (err) {
-        console.error('❌ Error accepting terms:', err);
-        return false;
+  if (error) throw error;
+
+  // 🔒 MANDATORY ONBOARDING CHECK
+  let onboardingRequired = false;
+
+  try {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('terms_accepted, profile_completed, username, full_name, last_login_at, created_at')
+      .eq('id', data.user.id)
+      .single();
+
+    // Check if onboarding is complete
+    const onboardingComplete = profile?.terms_accepted === true
+      && profile?.profile_completed === true
+      && profile?.username !== null
+      && profile?.username !== ''
+      && profile?.full_name !== null
+      && profile?.full_name !== '';
+
+    if (!onboardingComplete) {
+      onboardingRequired = true;
+
+      // Only redirect if NOT disabled
+      if (!disableAutoRedirect) {
+        setTimeout(() => {
+          window.location.href = './onboarding.html';
+        }, 100);
+      }
+    } else {
+      // Onboarding IS complete
+
+      // Send welcome back notification for returning users
+      if (profile?.last_login_at && window.notifyWelcomeBack) {
+        const accountAge = (new Date() - new Date(profile.created_at)) / (1000 * 60 * 60);
+
+        // Only send if account is at least 1 hour old (not a brand new signup)
+        if (accountAge > 1) {
+          window.notifyWelcomeBack(data.user.id, profile.full_name, profile.last_login_at)
+            .catch(err => console.error('Failed to send welcome back notification:', err));
+        }
+      }
+
+      // Update last login timestamp
+      supabase.from('profiles')
+        .update({ last_login_at: new Date().toISOString() })
+        .eq('id', data.user.id)
+        .then(() => { })
+        .catch(err => console.error('Failed to update last_login_at:', err));
     }
-};
 
-/**
- * Get my profile data
- * @returns {Promise<Object>}
- */
-window.getMyProfile = async function () {
-    try {
-        const user = await window.getCurrentUser();
-        if (!user) return null;
+  } catch (err) {
+    console.error('Error checking onboarding status:', err);
+    // On error, assume onboarding is needed to be safe
+    onboardingRequired = true;
 
-        const { data: profile, error } = await window.supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', user.id)
-            .single();
-
-        if (error) throw error;
-        return profile;
-    } catch (err) {
-        console.error('Error getting profile:', err);
-        return null;
+    if (!disableAutoRedirect) {
+      setTimeout(() => {
+        window.location.href = './onboarding.html';
+      }, 100);
     }
-};
+  }
 
-console.log('✅ Auth Guard loaded - onboarding enforcement active');
+  // Attach status to returned user object for caller convenience
+  data.user.onboardingRequired = onboardingRequired;
+  return data.user;
+}
+
+
+/* ============================
+   LOGOUT
+============================ */
+async function signOutUser() {
+  // Sign out from Supabase (clears auth tokens from localStorage)
+  await supabase.auth.signOut();
+
+  // Clear any custom storage for complete cleanup
+  sessionStorage.clear();
+
+  // Remove any legacy access flags if they exist
+  localStorage.removeItem('plusopinion_access');
+}
+
+/* ============================
+   GET CURRENT USER
+============================ */
+async function getCurrentUser() {
+  // 1. First try session (this is instant if already logged in)
+  const { data: sessionData } = await supabase.auth.getSession();
+  if (sessionData?.session?.user) {
+    return sessionData.session.user;
+  }
+
+  // 2. Fallback to getUser (network)
+  const { data } = await supabase.auth.getUser();
+  return data?.user || null;
+}
+
+/* ============================
+   PASSWORD RESET (Magic Link)
+============================ */
+async function resetPassword(email) {
+  // Use production URL in production, localhost in development
+  // This ensures password reset links always redirect to the correct environment
+  const redirectUrl = window.location.hostname === 'localhost'
+    ? 'http://localhost:3000/reset-password.html'
+    : 'https://plusopinion.com/reset-password.html';
+
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: redirectUrl
+  });
+
+  if (error) throw error;
+}
+
+/* ============================
+   GET USER PROFILE
+============================ */
+async function getUserProfile(userId) {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', userId)
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+/* ============================
+   UPDATE USER PROFILE
+============================ */
+async function updateUserProfile(userId, updates) {
+  const { data, error } = await supabase
+    .from('profiles')
+    .update(updates)
+    .eq('id', userId)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+/* ============================
+   UPLOAD AVATAR
+============================ */
+async function uploadAvatar(userId, file) {
+  const fileExt = file.name.split('.').pop();
+  const fileName = `${userId}/avatar.${fileExt}`;
+
+  // Upload file to storage
+  const { error: uploadError } = await supabase.storage
+    .from('avatars')
+    .upload(fileName, file, { upsert: true });
+
+  if (uploadError) throw uploadError;
+
+  // Get public URL
+  const { data } = supabase.storage
+    .from('avatars')
+    .getPublicUrl(fileName);
+
+  // Update profile with avatar URL
+  await updateUserProfile(userId, { avatar_url: data.publicUrl });
+
+  return data.publicUrl;
+}
+
+/* ============================
+   CHECK USERNAME AVAILABILITY
+============================ */
+async function checkUsernameAvailable(username) {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('username')
+    .eq('username', username)
+    .maybeSingle();
+
+  if (error) throw error;
+  return !data; // Returns true if available
+}
+
+/* ============================
+   SIGN IN WITH PROVIDER (Google/Facebook)
+============================ */
+async function signInWithProvider(provider) {
+  console.log(`🔵 Initiating ${provider} login...`);
+  try {
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: provider,
+      options: {
+        redirectTo: 'https://plusopinion.com/feed'
+      }
+    });
+
+    if (error) {
+      console.error('❌ Supabase OAuth Error:', error);
+      alert(`Login Error: ${error.message}`);
+      throw error;
+    }
+
+    console.log('✅ OAuth initiated:', data);
+    return data;
+  } catch (err) {
+    console.error('❌ Unexpected OAuth Error:', err);
+    alert(`Unexpected Login Error: ${err.message}`);
+    throw err;
+  }
+}
+
+/* ============================
+   EXPOSE TO BROWSER
+============================ */
+window.signUpUser = signUpUser;
+window.signInUser = signInUser;
+window.signInWithProvider = signInWithProvider; // NEW
+window.signOutUser = signOutUser;
+window.getCurrentUser = getCurrentUser;
+window.resetPassword = resetPassword;
+window.getUserProfile = getUserProfile;
+window.updateUserProfile = updateUserProfile;
+window.uploadAvatar = uploadAvatar;
+window.checkUsernameAvailable = checkUsernameAvailable;
+
+// Mark auth module as ready (prevents timeout errors on mobile)
+window.authReady = true;
+if (window._resolveAuthReady) {
+  window._resolveAuthReady();
+}
+// Auth module loaded successfully
