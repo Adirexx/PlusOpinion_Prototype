@@ -11,7 +11,7 @@
     
     <!-- Main Homepage - High Priority -->
     <url>
-        <loc>https://plusopinion.com/HOMEPAGE_FINAL.HTML</loc>
+        <loc>https://plusopinion.com/feed.html</loc>
         <lastmod>2026-02-13</lastmod>
         <changefreq>daily</changefreq>
         <priority>0.9</priority>
@@ -19,7 +19,7 @@
     
     <!-- Category Page - High Priority -->
     <url>
-        <loc>https://plusopinion.com/CATAGORYPAGE.HTML</loc>
+        <loc>https://plusopinion.com/categories.html</loc>
         <lastmod>2026-02-13</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
@@ -27,7 +27,7 @@
     
     <!-- Public Profile Pages - Medium Priority -->
     <url>
-        <loc>https://plusopinion.com/PUBLIC_POV_PROFILE.HTML</loc>
+        <loc>https://plusopinion.com/profile.html</loc>
         <lastmod>2026-02-13</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.7</priority>
