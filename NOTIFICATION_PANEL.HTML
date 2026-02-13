@@ -343,9 +343,9 @@
         const PAGE_TAB_MAP = {
             'HOMEPAGE_FINAL.HTML': 'home',
             'CATAGORYPAGE.HTML': 'categories',
-            'MY-SPACE-USER.HTML': 'myspace',
-            'NOTIFICATION-PANEL.HTML': 'notifs',
-            'PRIVATE-OWNER-PROFILE.HTML': 'profile'
+            'MY_SPACE_USER.HTML': 'myspace',
+            'NOTIFICATION_PANEL.HTML': 'notifs',
+            'PRIVATE_OWNER_PROFILE.HTML': 'profile'
         };
 
         // --- ICONS ---
@@ -811,7 +811,7 @@
                                             className={`text-[14px] leading-tight cursor-pointer hover:text-neon transition-colors ${data.unread ? 'text-white font-bold' : 'text-slate-300 font-semibold'}`}
                                             onClick={(e) => {
                                                 e.stopPropagation();
-                                                window.location.href = `PUBLIC-POV-PROFILE.HTML?id=${data.actor_id}`;
+                                                window.location.href = `PUBLIC_POV_PROFILE.HTML?id=${data.actor_id}`;
                                             }}
                                         >
                                             {title}
@@ -935,7 +935,7 @@
                             // Already on page, maybe scroll top or refresh?
                         }}
                     />
-                    <NavItem icon="User" label="Profile" isActive={activeTab === 'profile'} onClick={() => goTo('PRIVATE-OWNER-PROFILE.HTML')} />
+                    <NavItem icon="User" label="Profile" isActive={activeTab === 'profile'} onClick={() => goTo('PRIVATE_OWNER_PROFILE.HTML')} />
                 </div>
             );
         };
