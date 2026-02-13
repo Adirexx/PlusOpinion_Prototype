@@ -382,7 +382,7 @@
         // 🔗 GLOBAL NAVIGATION FUNCTION (PASTE HERE)
         const goTo = (page) => {
             window.scrollTo(0, 0);
-            window.navigateTo(page);
+            window.location.href = page;
         };
 
         function dispatchAction(action) {
@@ -391,7 +391,7 @@
                 window.PlusOpinionActions[action]();
             } else {
                 // On another page → redirect with hash
-                window.navigateTo(`HOMEPAGE_FINAL.HTML#${action.replace('open', '').toLowerCase()}`);
+                window.location.href = `HOMEPAGE_FINAL.HTML#${action.replace('open', '').toLowerCase()}`;
             }
         }
 
@@ -399,7 +399,7 @@
             if (window.PlusOpinionActions?.[action]) {
                 window.PlusOpinionActions[action]();
             } else {
-                window.navigateTo(`HOMEPAGE_FINAL.HTML#${action.replace('open', '').toLowerCase()}`);
+                window.location.href = `HOMEPAGE_FINAL.HTML#${action.replace('open', '').toLowerCase()}`;
             }
         };
 
@@ -525,7 +525,7 @@
             try {
                 const user = await window.getCurrentUser();
                 if (!user) {
-                    window.navigateTo('MY-SPACE-USER.HTML');
+                    window.location.href = 'MY-SPACE-USER.HTML';
                     return;
                 }
                 const { data: profile } = await window.supabase
@@ -535,12 +535,12 @@
                     .single();
 
                 if (profile && profile.is_business_account) {
-                    window.navigateTo('MY-SPACE-COMPANIES.HTML');
+                    window.location.href = 'MY-SPACE-COMPANIES.HTML';
                 } else {
-                    window.navigateTo('MY-SPACE-USER.HTML');
+                    window.location.href = 'MY-SPACE-USER.HTML';
                 }
             } catch (e) {
-                window.navigateTo('MY-SPACE-USER.HTML');
+                window.location.href = 'MY-SPACE-USER.HTML';
             }
         };
 
@@ -1795,7 +1795,7 @@
                         <h2 className="text-xl font-heading font-bold text-white mb-2">Private or Non-Existent</h2>
                         <p className="text-muted text-sm mb-8 max-w-[280px]">This profile is either private or doesn't exist on PlusOpinion.</p>
                         <button
-                            onClick={() => window.navigateTo('HOMEPAGE_FINAL.HTML')}
+                            onClick={() => window.location.href = 'HOMEPAGE_FINAL.HTML'}
                             className="bg-neon text-white px-8 py-3 rounded-full font-bold text-sm shadow-[0_0_20px_rgba(47,139,255,0.2)] active:scale-95 transition-transform"
                         >
                             Back to Opinions
@@ -2127,7 +2127,7 @@
 
                     {/* FAB (+ OPINION) - REQUIRED PUBLICLY */}
                     <button
-                        onClick={() => { vibrate(); window.navigateTo('HOMEPAGE_FINAL.HTML#opinion'); }}
+                        onClick={() => { vibrate(); window.location.href = 'HOMEPAGE_FINAL.HTML#opinion'; }}
                         className={`absolute bottom-6 right-5 bg-neon text-white h-12 pl-4 pr-5 rounded-full flex items-center gap-2 z-30 transition-all duration-500 opinion-btn ${fabVisible ? 'translate-y-0 opacity-100' : 'translate-y-20 opacity-0'}`}
                     >
                         <div className="opinion-icon"><Icon icon="Plus" size={20} className="stroke-[3px]" /></div>
