@@ -8,13 +8,13 @@ Allow: /
 Allow: /index.html
 Allow: /HOMEPAGE_FINAL.HTML
 Allow: /CATAGORYPAGE.HTML
-Allow: /PUBLIC-POV-PROFILE.HTML
+Allow: /PUBLIC_POV_PROFILE.HTML
 
 # Disallow private user areas
-Disallow: /MY-SPACE-USER.HTML
-Disallow: /MY-SPACE-COMPANIES.HTML
-Disallow: /PRIVATE-OWNER-PROFILE.HTML
-Disallow: /NOTIFICATION-PANEL.HTML
+Disallow: /MY_SPACE_USER.HTML
+Disallow: /MY_SPACE_COMPANIES.HTML
+Disallow: /PRIVATE_OWNER_PROFILE.HTML
+Disallow: /NOTIFICATION_PANEL.HTML
 
 # Disallow authentication pages
 Disallow: /reset-password.html
