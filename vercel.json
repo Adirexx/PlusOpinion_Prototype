@@ -67,35 +67,35 @@
     "rewrites": [
         {
             "source": "/feed",
-            "destination": "/HOMEPAGE_FINAL.HTML"
+            "destination": "/feed.html"
         },
         {
             "source": "/bookmarks",
-            "destination": "/BOOKMARKS.HTML"
+            "destination": "/bookmarks.html"
         },
         {
             "source": "/categories",
-            "destination": "/CATAGORYPAGE.HTML"
+            "destination": "/categories.html"
         },
         {
             "source": "/myspace",
-            "destination": "/MY_SPACE_USER.HTML"
+            "destination": "/myspace.html"
         },
         {
             "source": "/workspace",
-            "destination": "/MY_SPACE_COMPANIES.HTML"
+            "destination": "/workspace.html"
         },
         {
             "source": "/notifications",
-            "destination": "/NOTIFICATION_PANEL.HTML"
+            "destination": "/notifications.html"
         },
         {
             "source": "/myprofile",
-            "destination": "/PRIVATE_OWNER_PROFILE.HTML"
+            "destination": "/myprofile.html"
         },
         {
             "source": "/profile",
-            "destination": "/PUBLIC_POV_PROFILE.HTML"
+            "destination": "/profile.html"
         },
         {
             "source": "/onboarding",
@@ -111,19 +111,19 @@
         },
         {
             "source": "/about",
-            "destination": "/ABOUT.HTML"
+            "destination": "/about.html"
         },
         {
             "source": "/support",
-            "destination": "/SUPPORT.HTML"
+            "destination": "/support.html"
         },
         {
             "source": "/privacy-policy",
-            "destination": "/PRIVACY_POLICY.HTML"
+            "destination": "/privacy-policy.html"
         },
         {
             "source": "/terms-and-conditions",
-            "destination": "/TERMS_AND_CONDITIONS.HTML"
+            "destination": "/terms-and-conditions.html"
         }
     ]
 }
