@@ -312,7 +312,7 @@
                     .single();
 
                 if (profile && profile.is_business_account) {
-                    window.location.href = 'MY-SPACE-COMPANIES.HTML';
+                    window.location.href = 'MY_SPACE_COMPANIES.HTML';
                 } else {
                     window.location.href = 'MY-SPACE-USER.HTML';
                 }
@@ -500,15 +500,15 @@
                 e.stopPropagation();
                 const getPath = (p) => window.RouteCleaner ? window.RouteCleaner.getCleanPath(p) : p;
                 if (data.actor_id) {
-                    window.location.href = `${getPath('PUBLIC-POV-PROFILE.HTML')}?id=${data.actor_id}`;
+                    window.location.href = `${getPath('PUBLIC_POV_PROFILE.HTML')}?id=${data.actor_id}`;
                 } else if (data.metadata?.company_id) {
                     window.location.href = `${getPath('COMPANY PROFILE.HTML')}?id=${data.metadata.company_id}`;
                 } else if (data.category === 'revenue') {
-                    window.location.href = `${getPath('MY-SPACE-USER.HTML')}#revenue`;
+                    window.location.href = `${getPath('MY_SPACE_USER.HTML')}#revenue`;
                 } else if (data.category === 'security') {
-                    window.location.href = `${getPath('PRIVATE-OWNER-PROFILE.HTML')}#security`;
+                    window.location.href = `${getPath('PRIVATE_OWNER_PROFILE.HTML')}#security`;
                 } else if (data.type === 'rqs_updated') {
-                    window.location.href = `${getPath('MY-SPACE-USER.HTML')}#rqs`;
+                    window.location.href = `${getPath('MY_SPACE_USER.HTML')}#rqs`;
                 }
             };
 
