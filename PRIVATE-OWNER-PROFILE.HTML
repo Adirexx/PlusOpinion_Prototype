@@ -392,7 +392,7 @@
         // 🔗 GLOBAL NAVIGATION FUNCTION (PASTE HERE)
         const goTo = (page) => {
             window.scrollTo(0, 0);
-            window.navigateTo(page);
+            window.location.href = page;
         };
 
         const checkMySpaceRedirect = async () => {
@@ -400,7 +400,7 @@
                 const user = await window.getCurrentUser();
 
                 if (!user) {
-                    window.navigateTo('MY-SPACE-USER.HTML');
+                    window.location.href = 'MY-SPACE-USER.HTML';
                     return;
                 }
                 const { data: profile } = await window.supabase
@@ -410,12 +410,12 @@
                     .single();
 
                 if (profile && profile.is_business_account) {
-                    window.navigateTo('MY-SPACE-COMPANIES.HTML');
+                    window.location.href = 'MY-SPACE-COMPANIES.HTML';
                 } else {
-                    window.navigateTo('MY-SPACE-USER.HTML');
+                    window.location.href = 'MY-SPACE-USER.HTML';
                 }
             } catch (e) {
-                window.navigateTo('MY-SPACE-USER.HTML');
+                window.location.href = 'MY-SPACE-USER.HTML';
             }
         };
 
@@ -425,7 +425,7 @@
                 window.PlusOpinionActions[action]();
             } else {
                 // On another page → redirect with hash
-                window.navigateTo(`HOMEPAGE_FINAL.HTML#${action.replace('open', '').toLowerCase()}`);
+                window.location.href = `HOMEPAGE_FINAL.HTML#${action.replace('open', '').toLowerCase()}`;
             }
         }
 
@@ -433,7 +433,7 @@
             if (window.PlusOpinionActions?.[action]) {
                 window.PlusOpinionActions[action]();
             } else {
-                window.navigateTo(`HOMEPAGE_FINAL.HTML#${action.replace('open', '').toLowerCase()}`);
+                window.location.href = `HOMEPAGE_FINAL.HTML#${action.replace('open', '').toLowerCase()}`;
             }
         };
 
@@ -602,7 +602,7 @@
                                 onClick={() => {
                                     vibrate();
                                     const getPath = (p) => window.RouteCleaner ? window.RouteCleaner.getCleanPath(p) : p;
-                                    window.navigateTo(`PUBLIC-POV-PROFILE.HTML?id=${comment.user_id}`);
+                                    window.location.href = `${getPath('PUBLIC-POV-PROFILE.HTML')}?id=${comment.user_id}`;
                                 }}
                             />
                         </div>
@@ -615,7 +615,7 @@
                                     onClick={() => {
                                         vibrate();
                                         const getPath = (p) => window.RouteCleaner ? window.RouteCleaner.getCleanPath(p) : p;
-                                        window.navigateTo(`PUBLIC-POV-PROFILE.HTML?id=${comment.user_id}`);
+                                        window.location.href = `${getPath('PUBLIC-POV-PROFILE.HTML')}?id=${comment.user_id}`;
                                     }}
                                 >
                                     {comment.user}
@@ -2052,9 +2052,9 @@
 
             const [isReportModalOpen, setIsReportModalOpen] = useState(false);
             const [reportPostId, setReportPostId] = useState(null);
-            const [hiddenPostIds, setHiddenPostIds] = new Set();
-            const [mutedBrands, setMutedBrands] = new Set();
-            const [mutedCategories, setMutedCategories] = new Set();
+            const [hiddenPostIds, setHiddenPostIds] = useState(new Set());
+            const [mutedBrands, setMutedBrands] = useState(new Set());
+            const [mutedCategories, setMutedCategories] = useState(new Set());
 
             // Delete Modal State
             const [deleteModal, setDeleteModal] = useState({ isOpen: false, postId: null });
@@ -2109,7 +2109,7 @@
                     if (profile) {
                         const profileObj = {
                             full_name: profile.full_name || "User",
-                            username: profile.username || "user",
+                            username: profile.username || "",
                             bio: profile.bio || "",
                             avatar_url: profile.avatar_url || "",
                             banner_url: profile.banner_url || "",
@@ -2359,6 +2359,8 @@
 
 
 
+
+
             // Transform DB post to UI format
             const transformPost = (post) => ({
                 id: post.id,
@@ -2416,7 +2418,7 @@
                     'insights': 'insights'
                 };
                 const view = viewMap[section] || 'dashboard';
-                window.navigateTo(`MY-SPACE-USER.HTML?view=${view}`);
+                window.location.href = `MY-SPACE-USER.HTML?view=${view}`;
             };
 
             // SWIPE LOGIC FIXED
